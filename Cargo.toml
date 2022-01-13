@@ -1,5 +1,5 @@
 [package]
-name = "Bevy_project01"
+name = "bevy_project01"
 version = "0.1.0"
 edition = "2021"
 
