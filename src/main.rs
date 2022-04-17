@@ -1,22 +1,22 @@
 use bevy::prelude::*;
 use bevy_inspector_egui::WorldInspectorPlugin;
-use bevy_kira_audio::{Audio, AudioPlugin};
+//use bevy_kira_audio::{Audio, AudioPlugin};
 
 fn main() {
     App::new()
         .insert_resource(Msaa { samples: 4 })
         .add_plugins(DefaultPlugins)
-        .add_plugin(AudioPlugin)
+        //.add_plugin(AudioPlugin)
         .add_plugin(WorldInspectorPlugin::new())
-        .add_startup_system(start_background_audio)
+        //.add_startup_system(start_background_audio)
         .add_startup_system(setup)
         .run();
 }
 
 // BGM
-fn start_background_audio(asset_server: Res<AssetServer>, audio: Res<Audio>) {
-    audio.play_looped(asset_server.load("Lady_Maria.mp3"));
-}
+//fn start_background_audio(asset_server: Res<AssetServer>, audio: Res<Audio>) {
+//audio.play_looped(asset_server.load("Lady_Maria.mp3"));
+//}
 
 /// set up a simple 3D scene
 fn setup(
