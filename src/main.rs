@@ -47,7 +47,7 @@ fn setup_audio(
     audio: Res<Audio>,
     audio_sinks: Res<Assets<AudioSink>>,
 ) {
-    let music = asset_server.load("Sounds/Lady_Maria.ogg");
+    let music = asset_server.load("sounds/Lady_Maria.ogg");
     // play audio and upgrade to a strong handle
     let handle = audio_sinks.get_handle(audio.play(music));
     commands.insert_resource(MusicController(handle));
