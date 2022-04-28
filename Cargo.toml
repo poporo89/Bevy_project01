@@ -6,10 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy-inspector-egui = "0.9"
+bevy-inspector-egui = "0.10"
 
 [dependencies.bevy]
-version = "0.6.1"
 default-features = false
 # These are the remaining default features other than `bevy_audio` and `mp3`
 features = [
@@ -33,3 +32,4 @@ features = [
   "mp3",
   "ogg",
 ]
+version = "0.7.0"
