@@ -1,6 +1,5 @@
-use bevy::prelude::*;
+use bevy::{audio::AudioSink, prelude::*};
 use bevy_inspector_egui::WorldInspectorPlugin;
-//use bevy_kira_audio::{Audio, AudioPlugin};
 
 #[derive(Component)]
 struct Position(Vec3);
@@ -24,6 +23,8 @@ struct FloorBundle {
     position: Position,
 }
 
+struct MusicController(Handle<AudioSink>);
+
 fn main() {
     App::new()
         .insert_resource(Msaa { samples: 4 })
@@ -32,15 +33,41 @@ fn main() {
         .add_plugin(WorldInspectorPlugin::new())
         //.add_startup_system(start_background_audio)
         .add_startup_system(setup)
+        .add_startup_system(setup_audio)
         .add_startup_system_to_stage(StartupStage::Startup, spawn_floor)
         .add_startup_system_to_stage(StartupStage::PostStartup, spawn_tiles)
+        .add_system(pause)
         .run();
 }
 
 // BGM
-//fn start_background_audio(asset_server: Res<AssetServer>, audio: Res<Audio>) {
-//audio.play_looped(asset_server.load("Lady_Maria.mp3"));
-//}
+fn setup_audio(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    audio: Res<Audio>,
+    audio_sinks: Res<Assets<AudioSink>>,
+) {
+    let music = asset_server.load("Sounds/Lady_Maria.ogg");
+    // play audio and upgrade to a strong handle
+    let handle = audio_sinks.get_handle(audio.play(music));
+    commands.insert_resource(MusicController(handle));
+}
+
+fn pause(
+    keyboard_input: Res<Input<KeyCode>>,
+    audio_sinks: Res<Assets<AudioSink>>,
+    music_controller: Res<MusicController>,
+) {
+    if keyboard_input.just_pressed(KeyCode::Space) {
+        if let Some(sink) = audio_sinks.get(&music_controller.0) {
+            if sink.is_paused() {
+                sink.play()
+            } else {
+                sink.pause()
+            }
+        }
+    }
+}
 
 // set up a simple 3D scene
 fn setup(mut commands: Commands) {
