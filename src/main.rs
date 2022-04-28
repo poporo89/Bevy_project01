@@ -86,9 +86,9 @@ fn setup(mut commands: Commands) {
             illuminance: 3000.0,
             color: Color::WHITE,
             shadows_enabled: true,
-            ..Default::default()
+            ..default()
         },
-        ..Default::default()
+        ..default()
     });
 }
 
@@ -120,7 +120,7 @@ fn spawn_tiles(
                         mesh: meshes.add(mesh.clone()),
                         material: materials.add(material.clone()),
                         transform: Transform::from_translation(Vec3::new(x, y, z)),
-                        ..Default::default()
+                        ..default()
                     })
                     .insert(Tile);
             }
