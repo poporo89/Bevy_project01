@@ -83,7 +83,7 @@ fn setup(mut commands: Commands) {
     commands.spawn_bundle(DirectionalLightBundle {
         transform: Transform::from_xyz(-3.0, 8.0, -3.0).looking_at(Vec3::ZERO, Vec3::Y),
         directional_light: DirectionalLight {
-            illuminance: 3000.0,
+            illuminance: 6000.0,
             color: Color::WHITE,
             shadows_enabled: true,
             ..default()
