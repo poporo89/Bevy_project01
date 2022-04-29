@@ -57,19 +57,23 @@ fn move_camera(
     let (mut transform, speed) = query.single_mut();
 
     if keyboard_input.pressed(KeyCode::J) {
-        transform.translation -= Vec3::Z * speed.0 * timer.delta_seconds();
+        transform.translation -=
+            (Vec3::X + Vec3::Z) / 2.0_f32.sqrt() * speed.0 * timer.delta_seconds();
     }
 
     if keyboard_input.pressed(KeyCode::K) {
-        transform.translation += Vec3::Z * speed.0 * timer.delta_seconds();
+        transform.translation +=
+            (Vec3::X + Vec3::Z) / 2.0_f32.sqrt() * speed.0 * timer.delta_seconds();
     }
 
     if keyboard_input.pressed(KeyCode::H) {
-        transform.translation += Vec3::X * speed.0 * timer.delta_seconds();
+        transform.translation +=
+            (Vec3::X - Vec3::Z) / 2.0_f32.sqrt() * speed.0 * timer.delta_seconds();
     }
 
     if keyboard_input.pressed(KeyCode::L) {
-        transform.translation -= Vec3::X * speed.0 * timer.delta_seconds();
+        transform.translation -=
+            (Vec3::X - Vec3::Z) / 2.0_f32.sqrt() * speed.0 * timer.delta_seconds();
     }
 }
 
