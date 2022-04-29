@@ -141,7 +141,7 @@ fn spawn_tiles(
     query: Query<(&Size, &Position), With<Floor>>,
 ) {
     let mesh = Mesh::from(shape::Cube { size: 1.0 });
-    let material = StandardMaterial::from(Color::rgb(0.8, 0.7, 0.6));
+    let material = StandardMaterial::from(Color::rgb(230. / 255., 230. / 255., 230. / 255.));
 
     for (size, position) in query.iter() {
         let y = position.0.y;
