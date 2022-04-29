@@ -1,6 +1,5 @@
-use bevy::prelude::*;
-use bevy_inspector_egui::WorldInspectorPlugin;
-//use bevy_kira_audio::{Audio, AudioPlugin};
+use bevy::{audio::AudioSink, prelude::*};
+use bevy_inspector_egui::{Inspectable, RegisterInspectable, WorldInspectorPlugin};
 
 #[derive(Component)]
 struct Position(Vec3);
@@ -24,23 +23,82 @@ struct FloorBundle {
     position: Position,
 }
 
+#[derive(Component, Inspectable)]
+struct Speed(f32);
+
+#[derive(Component)]
+struct MovableCamera;
+
+struct MusicController(Handle<AudioSink>);
+
 fn main() {
     App::new()
         .insert_resource(Msaa { samples: 4 })
         .add_plugins(DefaultPlugins)
-        //.add_plugin(AudioPlugin)
         .add_plugin(WorldInspectorPlugin::new())
-        //.add_startup_system(start_background_audio)
+        .register_inspectable::<Speed>()
         .add_startup_system(setup)
+        .add_startup_system(setup_audio)
         .add_startup_system_to_stage(StartupStage::Startup, spawn_floor)
         .add_startup_system_to_stage(StartupStage::PostStartup, spawn_tiles)
+        .add_system(pause)
+        .add_system(move_camera)
         .run();
 }
 
+// move camera
+fn move_camera(
+    keyboard_input: Res<Input<KeyCode>>,
+    mut query: Query<(&mut Transform, &Speed), With<MovableCamera>>,
+    timer: Res<Time>,
+) {
+    let (mut transform, speed) = query.single_mut();
+
+    if keyboard_input.pressed(KeyCode::J) {
+        transform.translation -= Vec3::Z * speed.0 * timer.delta_seconds();
+    }
+
+    if keyboard_input.pressed(KeyCode::K) {
+        transform.translation += Vec3::Z * speed.0 * timer.delta_seconds();
+    }
+
+    if keyboard_input.pressed(KeyCode::H) {
+        transform.translation += Vec3::X * speed.0 * timer.delta_seconds();
+    }
+
+    if keyboard_input.pressed(KeyCode::L) {
+        transform.translation -= Vec3::X * speed.0 * timer.delta_seconds();
+    }
+}
+
 // BGM
-//fn start_background_audio(asset_server: Res<AssetServer>, audio: Res<Audio>) {
-//audio.play_looped(asset_server.load("Lady_Maria.mp3"));
-//}
+fn setup_audio(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    audio: Res<Audio>,
+    audio_sinks: Res<Assets<AudioSink>>,
+) {
+    let music = asset_server.load("sounds/Lady_Maria.ogg");
+    // play audio and upgrade to a strong handle
+    let handle = audio_sinks.get_handle(audio.play(music));
+    commands.insert_resource(MusicController(handle));
+}
+
+fn pause(
+    keyboard_input: Res<Input<KeyCode>>,
+    audio_sinks: Res<Assets<AudioSink>>,
+    music_controller: Res<MusicController>,
+) {
+    if keyboard_input.just_pressed(KeyCode::Space) {
+        if let Some(sink) = audio_sinks.get(&music_controller.0) {
+            if sink.is_paused() {
+                sink.play()
+            } else {
+                sink.pause()
+            }
+        }
+    }
+}
 
 // set up a simple 3D scene
 fn setup(mut commands: Commands) {
@@ -50,18 +108,21 @@ fn setup(mut commands: Commands) {
     camera.transform = Transform::from_xyz(-10.0, 10.0, -10.0).looking_at(Vec3::ZERO, Vec3::Y);
 
     // camera
-    commands.spawn_bundle(camera);
+    commands
+        .spawn_bundle(camera)
+        .insert(Speed(15.0))
+        .insert(MovableCamera);
 
     // light
     commands.spawn_bundle(DirectionalLightBundle {
         transform: Transform::from_xyz(-3.0, 8.0, -3.0).looking_at(Vec3::ZERO, Vec3::Y),
         directional_light: DirectionalLight {
-            illuminance: 3000.0,
+            illuminance: 6000.0,
             color: Color::WHITE,
             shadows_enabled: true,
-            ..Default::default()
+            ..default()
         },
-        ..Default::default()
+        ..default()
     });
 }
 
@@ -93,7 +154,7 @@ fn spawn_tiles(
                         mesh: meshes.add(mesh.clone()),
                         material: materials.add(material.clone()),
                         transform: Transform::from_translation(Vec3::new(x, y, z)),
-                        ..Default::default()
+                        ..default()
                     })
                     .insert(Tile);
             }
