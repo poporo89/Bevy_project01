@@ -1,5 +1,5 @@
 use bevy::{audio::AudioSink, prelude::*};
-use bevy_inspector_egui::WorldInspectorPlugin;
+use bevy_inspector_egui::{Inspectable, RegisterInspectable, WorldInspectorPlugin};
 
 #[derive(Component)]
 struct Position(Vec3);
@@ -23,6 +23,12 @@ struct FloorBundle {
     position: Position,
 }
 
+#[derive(Component, Inspectable)]
+struct Speed(f32);
+
+#[derive(Component)]
+struct MovableCamera;
+
 struct MusicController(Handle<AudioSink>);
 
 fn main() {
@@ -32,12 +38,39 @@ fn main() {
         //.add_plugin(AudioPlugin)
         .add_plugin(WorldInspectorPlugin::new())
         //.add_startup_system(start_background_audio)
+        .register_inspectable::<Speed>()
         .add_startup_system(setup)
         .add_startup_system(setup_audio)
         .add_startup_system_to_stage(StartupStage::Startup, spawn_floor)
         .add_startup_system_to_stage(StartupStage::PostStartup, spawn_tiles)
         .add_system(pause)
+        .add_system(move_camera)
         .run();
+}
+
+// move camera
+fn move_camera(
+    keyboard_input: Res<Input<KeyCode>>,
+    mut query: Query<(&mut Transform, &Speed), With<MovableCamera>>,
+    timer: Res<Time>,
+) {
+    let (mut transform, speed) = query.single_mut();
+
+    if keyboard_input.pressed(KeyCode::J) {
+        transform.translation -= Vec3::Z * speed.0 * timer.delta_seconds();
+    }
+
+    if keyboard_input.pressed(KeyCode::K) {
+        transform.translation += Vec3::Z * speed.0 * timer.delta_seconds();
+    }
+
+    if keyboard_input.pressed(KeyCode::H) {
+        transform.translation += Vec3::X * speed.0 * timer.delta_seconds();
+    }
+
+    if keyboard_input.pressed(KeyCode::L) {
+        transform.translation -= Vec3::X * speed.0 * timer.delta_seconds();
+    }
 }
 
 // BGM
@@ -77,7 +110,10 @@ fn setup(mut commands: Commands) {
     camera.transform = Transform::from_xyz(-10.0, 10.0, -10.0).looking_at(Vec3::ZERO, Vec3::Y);
 
     // camera
-    commands.spawn_bundle(camera);
+    commands
+        .spawn_bundle(camera)
+        .insert(Speed(15.0))
+        .insert(MovableCamera);
 
     // light
     commands.spawn_bundle(DirectionalLightBundle {
