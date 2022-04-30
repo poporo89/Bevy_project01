@@ -5,8 +5,12 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[dependencies]
-bevy-inspector-egui = "0.10"
-
 [dependencies.bevy]
 version = "0.7.0"
+
+[dependencies.bevy-inspector-egui]
+version = "0.10"
+
+[dependencies.pyo3]
+version = "0.16.4"
+features = ["auto-initialize"]
