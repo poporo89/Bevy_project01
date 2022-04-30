@@ -1,6 +1,7 @@
 use bevy::{audio::AudioSink, prelude::*};
 use bevy_inspector_egui::{Inspectable, RegisterInspectable, WorldInspectorPlugin};
-use pyo3::{prelude::*, types::IntoPyDict};
+use pyo3::{prelude::*, types::PyList};
+use std::env;
 
 #[derive(Component)]
 struct Position(Vec3);
@@ -62,13 +63,16 @@ fn call_python(keyboard_input: Res<Input<KeyCode>>) {
 fn test_python() -> PyResult<()> {
     Python::with_gil(|py| {
         let sys = py.import("sys")?;
-        let version: String = sys.getattr("version")?.extract()?;
+        // get a list of paths where Python modules may exist
+        let syspath: &PyList = sys.getattr("path")?.extract()?;
+        // create a path to add the list
+        let mut path = env::current_dir()?;
+        path.push("scripts");
 
-        let locals = [("os", py.import("os")?)].into_py_dict(py);
-        let code = "os.getenv('USER') or os.getenv('USERNAME') or 'Unknown'";
-        let user: String = py.eval(code, None, Some(locals))?.extract()?;
+        // add the path (unwrap because it returns Result)
+        syspath.insert(0, format!("{}", path.display())).unwrap();
 
-        println!("Hello {}, I'm Python {}", user, version);
+        println!("map path is {}", path.display());
         Ok(())
     })
 }
