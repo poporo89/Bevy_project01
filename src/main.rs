@@ -1,5 +1,6 @@
 use bevy::{audio::AudioSink, prelude::*};
 use bevy_inspector_egui::{Inspectable, RegisterInspectable, WorldInspectorPlugin};
+use pyo3::{prelude::*, types::IntoPyDict};
 
 #[derive(Component)]
 struct Position(Vec3);
@@ -43,7 +44,33 @@ fn main() {
         .add_startup_system_to_stage(StartupStage::PostStartup, spawn_tiles)
         .add_system(pause)
         .add_system(move_camera)
+        .add_system(call_python)
         .run();
+}
+
+// use Python
+fn call_python(keyboard_input: Res<Input<KeyCode>>) {
+    if keyboard_input.just_pressed(KeyCode::P) {
+        match test_python() {
+            Ok(()) => println!("Python works."),
+            Err(e) => println!("error parsing header: {:?}", e),
+        }
+    }
+}
+
+// Python test
+fn test_python() -> PyResult<()> {
+    Python::with_gil(|py| {
+        let sys = py.import("sys")?;
+        let version: String = sys.getattr("version")?.extract()?;
+
+        let locals = [("os", py.import("os")?)].into_py_dict(py);
+        let code = "os.getenv('USER') or os.getenv('USERNAME') or 'Unknown'";
+        let user: String = py.eval(code, None, Some(locals))?.extract()?;
+
+        println!("Hello {}, I'm Python {}", user, version);
+        Ok(())
+    })
 }
 
 // move camera
