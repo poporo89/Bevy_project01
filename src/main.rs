@@ -72,7 +72,9 @@ fn test_python() -> PyResult<()> {
         // add the path (unwrap because it returns Result)
         syspath.insert(0, format!("{}", path.display())).unwrap();
 
-        println!("map path is {}", path.display());
+        let map = py.import("map")?;
+        map.call_method0("say_hello")?;
+
         Ok(())
     })
 }
