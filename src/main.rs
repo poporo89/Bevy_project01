@@ -1,5 +1,7 @@
 use bevy::{audio::AudioSink, prelude::*};
 use bevy_inspector_egui::{Inspectable, RegisterInspectable, WorldInspectorPlugin};
+use pyo3::{prelude::*, types::PyList};
+use std::env;
 
 #[derive(Component)]
 struct Position(Vec3);
@@ -43,7 +45,38 @@ fn main() {
         .add_startup_system_to_stage(StartupStage::PostStartup, spawn_tiles)
         .add_system(pause)
         .add_system(move_camera)
+        .add_system(call_python)
         .run();
+}
+
+// use Python
+fn call_python(keyboard_input: Res<Input<KeyCode>>) {
+    if keyboard_input.just_pressed(KeyCode::P) {
+        match test_python() {
+            Ok(()) => println!("Python works."),
+            Err(e) => println!("error parsing header: {:?}", e),
+        }
+    }
+}
+
+// Python test
+fn test_python() -> PyResult<()> {
+    Python::with_gil(|py| {
+        let sys = py.import("sys")?;
+        // get a list of paths where Python modules may exist
+        let syspath: &PyList = sys.getattr("path")?.extract()?;
+        // create a path to add the list
+        let mut path = env::current_dir()?;
+        path.push("scripts");
+
+        // add the path (unwrap because it returns Result)
+        syspath.insert(0, format!("{}", path.display())).unwrap();
+
+        let map = py.import("map")?;
+        map.call_method0("say_hello")?;
+
+        Ok(())
+    })
 }
 
 // move camera
