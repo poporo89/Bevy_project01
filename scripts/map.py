@@ -9,6 +9,5 @@ def test_map():
         [ 0, 0, 0, 0,],
     ]
     result.append({'height':height, 'data':data})
-    # print test
-    print(result[0]['height'], result[0]['data'][0][0])
-
+    result.append({'height':height, 'data':data})
+    return result
