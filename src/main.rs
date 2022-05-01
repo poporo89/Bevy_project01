@@ -73,7 +73,7 @@ fn test_python() -> PyResult<()> {
         syspath.insert(0, format!("{}", path.display())).unwrap();
 
         let map = py.import("map")?;
-        map.call_method0("say_hello")?;
+        map.call_method0("test_map")?;
 
         Ok(())
     })
