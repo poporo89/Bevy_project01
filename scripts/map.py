@@ -1,5 +1,6 @@
-# vim: lsp=4
+# Before edit map data, :set lsp=4 without mode lines.
 def test_map():
+    """Return the map for tests."""
     result = []
     # 1st floor
     height = 0
