@@ -4,9 +4,9 @@ def test_map():
     # 1st floor
     height = 0
     data = [
-        [ 0, 0, 0,],
-        [ 0,-1, 0,],
-        [ 0, 0, 0,],
+        [ 0, 0, 0, 0,],
+        [ 0,-1,-1, 0,],
+        [ 0, 0, 0, 0,],
     ]
     result.append({'height':height, 'data':data})
     # print test
