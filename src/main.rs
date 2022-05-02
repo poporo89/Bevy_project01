@@ -4,13 +4,20 @@ use pyo3::{prelude::*, types::PyList};
 use std::env;
 
 #[derive(Component)]
-struct Position(Vec3);
-
-#[derive(Component)]
 struct Tile;
 
+
+}
+
+#[derive(Bundle)]
+struct FloorBundle {
+    floor: FloorLegacy,
+    size: Size,
+    position: Position,
+}
+
 #[derive(Component)]
-struct Floor;
+struct FloorLegacy;
 
 #[derive(Component)]
 struct Size {
@@ -18,12 +25,8 @@ struct Size {
     depth: u32,
 }
 
-#[derive(Bundle)]
-struct FloorBundle {
-    floor: Floor,
-    size: Size,
-    position: Position,
-}
+#[derive(Component, Default)]
+struct Position(Vec3);
 
 #[derive(Component, Inspectable)]
 struct Speed(f32);
@@ -165,7 +168,7 @@ fn setup(mut commands: Commands) {
 
 fn spawn_floor(mut commands: Commands) {
     commands.spawn_bundle(FloorBundle {
-        floor: Floor,
+        floor: FloorLegacy,
         size: Size { width: 5, depth: 4 },
         position: Position(Vec3::new(0.0, 0.0, 0.0)),
     });
@@ -175,7 +178,7 @@ fn spawn_tiles(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    query: Query<(&Size, &Position), With<Floor>>,
+    query: Query<(&Size, &Position), With<FloorLegacy>>,
 ) {
     let mesh = Mesh::from(shape::Cube { size: 1.0 });
     let material = StandardMaterial::from(Color::rgb(230. / 255., 230. / 255., 230. / 255.));
