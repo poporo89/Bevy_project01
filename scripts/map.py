@@ -1,7 +1,9 @@
 # Before edit map data, :set lsp=4 without mode lines.
 def test_map():
     """Return the map for tests."""
-    result = []
+    floors = []
+    # map position
+    position = [0.0, 0.0, 0.0]
     # 1st floor
     height = 0
     data = [
@@ -9,7 +11,7 @@ def test_map():
         [ 0,-1,-1, 0,],
         [ 0, 0, 0, 0,],
     ]
-    result.append({'height':height, 'data':data})
+    floors.append({'height':height, 'data':data})
     # 2nd floor
     height = 3
     data = [
@@ -17,5 +19,9 @@ def test_map():
         [-1,-1,-1, 0,],
         [-1,-1,-1, 0,],
     ]
-    result.append({'height':height, 'data':data})
+    floors.append({'height':height, 'data':data})
+    result = {
+        "floors": floors,
+        "position": position,
+    }
     return result
