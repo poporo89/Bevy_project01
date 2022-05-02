@@ -23,7 +23,7 @@ enum Level {
 
 impl Level {
     // bind lebels to Python method names
-    fn label(&self) -> &str {
+    fn name(&self) -> &str {
         match *self {
             Level::TestMap => "test_map",
         }
@@ -95,7 +95,7 @@ fn main() {
         .add_startup_system(setup_levels)
         .add_startup_system_to_stage(StartupStage::Startup, spawn_floor)
         .add_startup_system_to_stage(StartupStage::PostStartup, spawn_tiles)
-        .add_system(pause)
+        .add_system(pause_audio)
         .add_system(move_camera)
         .add_system(manual_load_map)
         .run();
@@ -170,7 +170,7 @@ fn parse_map_from_python(
             .unwrap();
 
         let map_module = py.import("map")?;
-        let py_map: &PyDict = map_module.call_method0(level.label())?.extract()?;
+        let py_map: &PyDict = map_module.call_method0(level.name())?.extract()?;
 
         // parse floors
         let py_floors = py_map.get_item("floors").unwrap();
@@ -245,7 +245,7 @@ fn setup_audio(
     commands.insert_resource(MusicController(handle));
 }
 
-fn pause(
+fn pause_audio(
     keyboard_input: Res<Input<KeyCode>>,
     audio_sinks: Res<Assets<AudioSink>>,
     music_controller: Res<MusicController>,
