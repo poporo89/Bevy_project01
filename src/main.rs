@@ -155,7 +155,7 @@ fn parse_map_from_python(
     position: &mut Vec3,
     level: &Level,
 ) -> PyResult<()> {
-    // load map data from a Python module
+    // all communications with Python are placed in the closure
     Python::with_gil(|py| {
         let sys_module = py.import("sys")?;
         // get a list of paths where Python modules may exist
@@ -164,11 +164,12 @@ fn parse_map_from_python(
         let mut map_path = env::current_dir()?;
         map_path.push("scripts");
 
-        // add the path (unwrap because it returns Result)
+        // add the path
         path_list
             .insert(0, format!("{}", map_path.display()))
             .unwrap();
 
+        // use scripts/map.py
         let map_module = py.import("map")?;
         let py_map: &PyDict = map_module.call_method0(level.name())?.extract()?;
 
