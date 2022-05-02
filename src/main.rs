@@ -114,38 +114,41 @@ fn setup_levels(mut commands: Commands) {
     });
 }
 
-// load map
-fn manual_load_map(keyboard_input: Res<Input<KeyCode>>, mut query: Query<(&Level, &mut Map)>) {
-    // tentative event for loading
+// load map at manual event
+fn manual_load_map(keyboard_input: Res<Input<KeyCode>>, query: Query<(&Level, &mut Map)>) {
+    // manual event to load map
     if keyboard_input.just_pressed(KeyCode::P) {
-        let wanted_level = Level::TestMap;
-        // if the map is already loaded, quit the system
-        for (level, map) in query.iter() {
-            if level == &wanted_level && !map.floors.is_empty() {
-                return;
-            }
+        let level_to_load = Level::TestMap;
+        load_map(&level_to_load, query);
+    }
+}
+
+fn load_map(level_to_load: &Level, mut query: Query<(&Level, &mut Map)>) {
+    // if the map is already loaded, quit the system
+    for (level, map) in query.iter() {
+        if level == level_to_load && !map.floors.is_empty() {
+            return;
         }
+    }
 
-        for (level, mut map) in query.iter_mut() {
-            if level == &wanted_level {
-                // load map data for the wanted level
-                let mut floor_data = Vec::new();
-                let mut position_data = Vec3::ZERO;
-                match parse_map_from_python(&mut floor_data, &mut position_data, level) {
-                    Ok(_) => println!("Python works."),
-                    Err(e) => println!("error parsing header: {:?}", e),
-                };
+    for (level, mut map) in query.iter_mut() {
+        if level == level_to_load {
+            // get data through arguments
+            let mut floor_data = Vec::new();
+            let mut position_data = Vec3::ZERO;
+            match parse_map_from_python(&mut floor_data, &mut position_data, level) {
+                Ok(_) => println!("Python works."),
+                Err(e) => println!("error parsing header: {:?}", e),
+            };
 
-                // store map data to the level entity
-                map.floors = floor_data;
-                map.position = position_data;
-                println!("{}", format!("{:?}", map));
-            }
+            // store map data to the map component
+            map.floors = floor_data;
+            map.position = position_data;
+            println!("{}", format!("{:?}", map));
         }
     }
 }
 
-// load map data from Python
 // TODO:: restructure arguments & refactoring
 fn parse_map_from_python(
     floors: &mut Vec<Floor>,
