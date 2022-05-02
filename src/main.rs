@@ -1,6 +1,9 @@
 use bevy::{audio::AudioSink, prelude::*};
 use bevy_inspector_egui::{Inspectable, RegisterInspectable, WorldInspectorPlugin};
-use pyo3::{prelude::*, types::PyList};
+use pyo3::{
+    prelude::*,
+    types::{PyDict, PyList},
+};
 use std::env;
 
 #[derive(Component)]
@@ -89,39 +92,109 @@ fn main() {
         .register_inspectable::<Speed>()
         .add_startup_system(setup)
         .add_startup_system(setup_audio)
+        .add_startup_system(setup_levels)
         .add_startup_system_to_stage(StartupStage::Startup, spawn_floor)
         .add_startup_system_to_stage(StartupStage::PostStartup, spawn_tiles)
         .add_system(pause)
         .add_system(move_camera)
-        .add_system(call_python)
+        .add_system(manual_load_map)
         .run();
 }
 
-// use Python
-fn call_python(keyboard_input: Res<Input<KeyCode>>) {
+// setup levels with empty maps
+fn setup_levels(mut commands: Commands) {
+    // test map
+    commands.spawn_bundle(LevelBundle {
+        level: Level::TestMap,
+        map: Map {
+            floors: Vec::new(),
+            position: Vec3::ZERO,
+        },
+        visible: Visible(false),
+    });
+}
+
+// load map
+fn manual_load_map(keyboard_input: Res<Input<KeyCode>>, mut query: Query<(&Level, &mut Map)>) {
+    // tentative event for loading
     if keyboard_input.just_pressed(KeyCode::P) {
-        match test_python() {
-            Ok(()) => println!("Python works."),
-            Err(e) => println!("error parsing header: {:?}", e),
+        let wanted_level = Level::TestMap;
+        // if the map is already loaded, quit the system
+        for (level, map) in query.iter() {
+            if level == &wanted_level && !map.floors.is_empty() {
+                return;
+            }
+        }
+
+        for (level, mut map) in query.iter_mut() {
+            if level == &wanted_level {
+                // load map data for the wanted level
+                let mut floor_data = Vec::new();
+                let mut position_data = Vec3::ZERO;
+                match parse_map_from_python(&mut floor_data, &mut position_data, level) {
+                    Ok(_) => println!("Python works."),
+                    Err(e) => println!("error parsing header: {:?}", e),
+                };
+
+                // store map data to the level entity
+                map.floors = floor_data;
+                map.position = position_data;
+                println!("{}", format!("{:?}", map));
+            }
         }
     }
 }
 
-// Python test
-fn test_python() -> PyResult<()> {
+// load map data from Python
+// TODO:: restructure arguments & refactoring
+fn parse_map_from_python(
+    floors: &mut Vec<Floor>,
+    position: &mut Vec3,
+    level: &Level,
+) -> PyResult<()> {
+    // load map data from a Python module
     Python::with_gil(|py| {
-        let sys = py.import("sys")?;
+        let sys_module = py.import("sys")?;
         // get a list of paths where Python modules may exist
-        let syspath: &PyList = sys.getattr("path")?.extract()?;
+        let path_list: &PyList = sys_module.getattr("path")?.extract()?;
         // create a path to add the list
-        let mut path = env::current_dir()?;
-        path.push("scripts");
+        let mut map_path = env::current_dir()?;
+        map_path.push("scripts");
 
         // add the path (unwrap because it returns Result)
-        syspath.insert(0, format!("{}", path.display())).unwrap();
+        path_list
+            .insert(0, format!("{}", map_path.display()))
+            .unwrap();
 
-        let map = py.import("map")?;
-        map.call_method0("test_map")?;
+        let map_module = py.import("map")?;
+        let py_map: &PyDict = map_module.call_method0(level.label())?.extract()?;
+
+        // parse floors
+        let py_floors = py_map.get_item("floors").unwrap();
+        for py_floor in py_floors.iter().unwrap() {
+            let mut data = Vec::new();
+            let py_data = py_floor.as_ref().unwrap().get_item("data").unwrap();
+            // push each rows as Vec<i32>
+            for py_row in py_data.iter().unwrap() {
+                let row: Vec<i32> = py_row.unwrap().extract::<Vec<i32>>().unwrap();
+                data.push(row);
+            }
+            let height = py_floor
+                .as_ref()
+                .unwrap()
+                .get_item("height")
+                .unwrap()
+                .extract::<i32>()
+                .unwrap();
+            floors.push(Floor { data, height });
+        }
+
+        // parse position
+        let py_position = py_map.get_item("position").unwrap();
+        let x = py_position.get_item(0).unwrap().extract::<f32>().unwrap();
+        let y = py_position.get_item(1).unwrap().extract::<f32>().unwrap();
+        let z = py_position.get_item(2).unwrap().extract::<f32>().unwrap();
+        *position = Vec3::new(x, y, z);
 
         Ok(())
     })
