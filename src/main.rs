@@ -6,8 +6,53 @@ use std::env;
 #[derive(Component)]
 struct Tile;
 
-
+#[derive(Bundle)]
+struct LevelBundle {
+    level: Level,
+    map: Map,
+    visible: Visible,
 }
+
+#[derive(Component, PartialEq, Eq)]
+enum Level {
+    TestMap,
+}
+
+impl Level {
+    // bind lebels to Python method names
+    fn label(&self) -> &str {
+        match *self {
+            Level::TestMap => "test_map",
+        }
+    }
+}
+
+#[derive(Component, Default, Debug)]
+struct Map {
+    floors: Vec<Floor>,
+    position: Vec3,
+}
+
+impl Map {
+    fn width(&self) -> u32 {
+        let first_floor = self.floors.first().unwrap();
+        first_floor.data[0].len().try_into().unwrap()
+    }
+
+    fn depth(&self) -> u32 {
+        let first_floor = self.floors.first().unwrap();
+        first_floor.data.len().try_into().unwrap()
+    }
+}
+
+#[derive(Debug)]
+struct Floor {
+    height: i32,
+    data: Vec<Vec<i32>>,
+}
+
+#[derive(Component, Default)]
+struct Visible(bool);
 
 #[derive(Bundle)]
 struct FloorBundle {
