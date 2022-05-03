@@ -85,6 +85,8 @@ fn main() {
         .add_system(move_camera)
         .add_system(manual_load_map)
         .add_system(manual_spawn_map)
+        .add_system(manual_despawn_map)
+        .add_system(manual_unload_map)
         .run();
 }
 
@@ -324,5 +326,55 @@ fn spawn_map(
             }
         });
         visible.0 = true;
+    }
+}
+
+fn manual_unload_map(
+    keyboard_input: Res<Input<KeyCode>>,
+    query: Query<(&Level, &mut Map, &mut Position)>,
+) {
+    if keyboard_input.just_pressed(KeyCode::D) {
+        let level_to_unload = Level::TestMap;
+        unload_map(&level_to_unload, query);
+    }
+}
+
+// delete loaded map data
+fn unload_map(level_to_unload: &Level, mut query: Query<(&Level, &mut Map, &mut Position)>) {
+    for (level, mut map, mut position) in query.iter_mut() {
+        if level == level_to_unload {
+            map.floors = Vec::new();
+            position.0 = Vec3::ZERO;
+        }
+    }
+}
+
+fn manual_despawn_map(
+    commands: Commands,
+    query: Query<(Entity, &Level, Option<&mut Visible>, Option<&Tile>)>,
+    keyboard_input: Res<Input<KeyCode>>,
+) {
+    if keyboard_input.just_pressed(KeyCode::D) {
+        let level_to_despawn = Level::TestMap;
+        despawn_map(commands, query, &level_to_despawn);
+    }
+}
+
+fn despawn_map(
+    mut commands: Commands,
+    mut query: Query<(Entity, &Level, Option<&mut Visible>, Option<&Tile>)>,
+    level_to_despawn: &Level,
+) {
+    for (entity, level, visible, tile) in query.iter_mut() {
+        if level == level_to_despawn {
+            // despawn tiles
+            if tile.is_some() {
+                commands.entity(entity).despawn_recursive();
+            }
+            // set the map to be not visible
+            if let Some(mut visible) = visible {
+                visible.0 = false;
+            }
+        }
     }
 }
