@@ -17,7 +17,7 @@ struct LevelBundle {
     visible: Visible,
 }
 
-#[derive(Component, PartialEq, Eq)]
+#[derive(Component, PartialEq, Eq, Clone)]
 enum Level {
     TestMap,
 }
@@ -84,6 +84,7 @@ fn main() {
         .add_system(pause_audio)
         .add_system(move_camera)
         .add_system(manual_load_map)
+        .add_system(manual_spawn_map)
         .run();
 }
 
@@ -269,4 +270,59 @@ fn setup(mut commands: Commands) {
         },
         ..default()
     });
+}
+
+fn manual_spawn_map(
+    commands: Commands,
+    meshes: ResMut<Assets<Mesh>>,
+    materials: ResMut<Assets<StandardMaterial>>,
+    query: Query<(&Level, &Map, &Position, &mut Visible)>,
+    keyboard_input: Res<Input<KeyCode>>,
+) {
+    // manual event to spawn map
+    if keyboard_input.pressed(KeyCode::P) {
+        spawn_map(commands, meshes, materials, query);
+    }
+}
+
+fn spawn_map(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut query: Query<(&Level, &Map, &Position, &mut Visible)>,
+) {
+    let mesh = Mesh::from(shape::Cube { size: 1.0 });
+    let material = StandardMaterial::from(Color::rgb(230. / 255., 230. / 255., 230. / 255.));
+
+    // spawn maps that are invisible and loaded
+    for (level, map, position, mut visible) in query.iter_mut() {
+        if visible.0 || !map.is_loaded() {
+            continue;
+        }
+        let floors = map.floors.iter();
+        floors.for_each(|floor| {
+            let height = floor.height as f32;
+            for i in 0..map.width() {
+                for j in 0..map.depth() {
+                    // -1 means no tile.
+                    if floor.data[j][i] == -1 {
+                        continue;
+                    }
+                    let x = (map.width() - 1 - i) as f32 + position.0.x;
+                    let z = (map.depth() - 1 - j) as f32 + position.0.z;
+                    let y = floor.data[j][i] as f32 + height + position.0.y;
+                    commands
+                        .spawn_bundle(PbrBundle {
+                            mesh: meshes.add(mesh.clone()),
+                            material: materials.add(material.clone()),
+                            transform: Transform::from_translation(Vec3::new(x, y, z)),
+                            ..default()
+                        })
+                        .insert(Tile)
+                        .insert(level.clone());
+                }
+            }
+        });
+        visible.0 = true;
+    }
 }
