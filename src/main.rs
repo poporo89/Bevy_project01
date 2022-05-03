@@ -124,15 +124,12 @@ fn manual_load_map(keyboard_input: Res<Input<KeyCode>>, query: Query<(&Level, &m
 }
 
 fn load_map(level_to_load: &Level, mut query: Query<(&Level, &mut Map)>) {
-    // if the map is already loaded, quit the system
-    for (level, map) in query.iter() {
-        if level == level_to_load && !map.floors.is_empty() {
-            return;
-        }
-    }
-
     for (level, mut map) in query.iter_mut() {
         if level == level_to_load {
+            // if the map is already loaded, quit the system
+            if !map.floors.is_empty() {
+                return;
+            }
             // get data through arguments
             let mut floor_data = Vec::new();
             let mut position_data = Vec3::ZERO;
@@ -149,7 +146,6 @@ fn load_map(level_to_load: &Level, mut query: Query<(&Level, &mut Map)>) {
     }
 }
 
-// TODO:: restructure arguments & refactoring
 fn parse_map_from_python(
     floors: &mut Vec<Floor>,
     position: &mut Vec3,
