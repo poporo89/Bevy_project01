@@ -46,6 +46,9 @@ impl Map {
         let first_floor = self.floors.first().unwrap();
         first_floor.data.len()
     }
+
+    fn is_loaded(&self) -> bool {
+        !self.floors.is_empty()
     }
 }
 
@@ -111,7 +114,7 @@ fn load_map(level_to_load: &Level, mut query: Query<(&Level, &mut Map, &mut Posi
     for (level, mut map, mut position) in query.iter_mut() {
         if level == level_to_load {
             // if the map is already loaded, quit the system
-            if !map.floors.is_empty() {
+            if map.is_loaded() {
                 return;
             }
             // get data through arguments
