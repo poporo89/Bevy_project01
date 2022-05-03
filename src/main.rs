@@ -37,14 +37,15 @@ struct Map {
 }
 
 impl Map {
-    fn width(&self) -> u32 {
+    fn width(&self) -> usize {
         let first_floor = self.floors.first().unwrap();
-        first_floor.data[0].len().try_into().unwrap()
+        first_floor.data[0].len()
     }
 
-    fn depth(&self) -> u32 {
+    fn depth(&self) -> usize {
         let first_floor = self.floors.first().unwrap();
-        first_floor.data.len().try_into().unwrap()
+        first_floor.data.len()
+    }
     }
 }
 
