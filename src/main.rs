@@ -13,6 +13,7 @@ struct Tile;
 struct LevelBundle {
     level: Level,
     map: Map,
+    position: Position,
     visible: Visible,
 }
 
@@ -33,7 +34,6 @@ impl Level {
 #[derive(Component, Default, Debug)]
 struct Map {
     floors: Vec<Floor>,
-    position: Vec3,
 }
 
 impl Map {
@@ -55,6 +55,9 @@ struct Floor {
 }
 
 #[derive(Component, Default)]
+struct Position(Vec3);
+
+#[derive(Component, Default)]
 struct Visible(bool);
 
 #[derive(Bundle)]
@@ -72,9 +75,6 @@ struct Size {
     width: u32,
     depth: u32,
 }
-
-#[derive(Component, Default)]
-struct Position(Vec3);
 
 #[derive(Component, Inspectable)]
 struct Speed(f32);
@@ -106,16 +106,17 @@ fn setup_levels(mut commands: Commands) {
     // test map
     commands.spawn_bundle(LevelBundle {
         level: Level::TestMap,
-        map: Map {
-            floors: Vec::new(),
-            position: Vec3::ZERO,
-        },
+        map: Map { floors: Vec::new() },
+        position: Position(Vec3::ZERO),
         visible: Visible(false),
     });
 }
 
 // load map at manual event
-fn manual_load_map(keyboard_input: Res<Input<KeyCode>>, query: Query<(&Level, &mut Map)>) {
+fn manual_load_map(
+    keyboard_input: Res<Input<KeyCode>>,
+    query: Query<(&Level, &mut Map, &mut Position)>,
+) {
     // manual event to load map
     if keyboard_input.just_pressed(KeyCode::P) {
         let level_to_load = Level::TestMap;
@@ -123,16 +124,13 @@ fn manual_load_map(keyboard_input: Res<Input<KeyCode>>, query: Query<(&Level, &m
     }
 }
 
-fn load_map(level_to_load: &Level, mut query: Query<(&Level, &mut Map)>) {
-    // if the map is already loaded, quit the system
-    for (level, map) in query.iter() {
-        if level == level_to_load && !map.floors.is_empty() {
-            return;
-        }
-    }
-
-    for (level, mut map) in query.iter_mut() {
+fn load_map(level_to_load: &Level, mut query: Query<(&Level, &mut Map, &mut Position)>) {
+    for (level, mut map, mut position) in query.iter_mut() {
         if level == level_to_load {
+            // if the map is already loaded, quit the system
+            if !map.floors.is_empty() {
+                return;
+            }
             // get data through arguments
             let mut floor_data = Vec::new();
             let mut position_data = Vec3::ZERO;
@@ -143,13 +141,12 @@ fn load_map(level_to_load: &Level, mut query: Query<(&Level, &mut Map)>) {
 
             // store map data to the map component
             map.floors = floor_data;
-            map.position = position_data;
+            position.0 = position_data;
             println!("{}", format!("{:?}", map));
         }
     }
 }
 
-// TODO:: restructure arguments & refactoring
 fn parse_map_from_python(
     floors: &mut Vec<Floor>,
     position: &mut Vec3,
