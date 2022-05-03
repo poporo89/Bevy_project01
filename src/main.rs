@@ -60,22 +60,6 @@ struct Position(Vec3);
 #[derive(Component, Default)]
 struct Visible(bool);
 
-#[derive(Bundle)]
-struct FloorBundle {
-    floor: FloorLegacy,
-    size: Size,
-    position: Position,
-}
-
-#[derive(Component)]
-struct FloorLegacy;
-
-#[derive(Component)]
-struct Size {
-    width: u32,
-    depth: u32,
-}
-
 #[derive(Component, Inspectable)]
 struct Speed(f32);
 
@@ -93,8 +77,6 @@ fn main() {
         .add_startup_system(setup)
         .add_startup_system(setup_audio)
         .add_startup_system(setup_levels)
-        .add_startup_system_to_stage(StartupStage::Startup, spawn_floor)
-        .add_startup_system_to_stage(StartupStage::PostStartup, spawn_tiles)
         .add_system(pause_audio)
         .add_system(move_camera)
         .add_system(manual_load_map)
@@ -283,40 +265,4 @@ fn setup(mut commands: Commands) {
         },
         ..default()
     });
-}
-
-fn spawn_floor(mut commands: Commands) {
-    commands.spawn_bundle(FloorBundle {
-        floor: FloorLegacy,
-        size: Size { width: 5, depth: 4 },
-        position: Position(Vec3::new(0.0, 0.0, 0.0)),
-    });
-}
-
-fn spawn_tiles(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    query: Query<(&Size, &Position), With<FloorLegacy>>,
-) {
-    let mesh = Mesh::from(shape::Cube { size: 1.0 });
-    let material = StandardMaterial::from(Color::rgb(230. / 255., 230. / 255., 230. / 255.));
-
-    for (size, position) in query.iter() {
-        let y = position.0.y;
-        for i in 0..size.width {
-            for j in 0..size.depth {
-                let x = (i as f32) - 0.5 * (size.width as f32) + 0.5;
-                let z = (j as f32) - 0.5 * (size.depth as f32) + 0.5;
-                commands
-                    .spawn_bundle(PbrBundle {
-                        mesh: meshes.add(mesh.clone()),
-                        material: materials.add(material.clone()),
-                        transform: Transform::from_translation(Vec3::new(x, y, z)),
-                        ..default()
-                    })
-                    .insert(Tile);
-            }
-        }
-    }
 }
