@@ -17,7 +17,7 @@ struct LevelBundle {
     visible: Visible,
 }
 
-#[derive(Component, PartialEq, Eq)]
+#[derive(Component, PartialEq, Eq, Clone)]
 enum Level {
     TestMap,
 }
@@ -37,14 +37,18 @@ struct Map {
 }
 
 impl Map {
-    fn width(&self) -> u32 {
+    fn width(&self) -> usize {
         let first_floor = self.floors.first().unwrap();
-        first_floor.data[0].len().try_into().unwrap()
+        first_floor.data[0].len()
     }
 
-    fn depth(&self) -> u32 {
+    fn depth(&self) -> usize {
         let first_floor = self.floors.first().unwrap();
-        first_floor.data.len().try_into().unwrap()
+        first_floor.data.len()
+    }
+
+    fn is_loaded(&self) -> bool {
+        !self.floors.is_empty()
     }
 }
 
@@ -59,22 +63,6 @@ struct Position(Vec3);
 
 #[derive(Component, Default)]
 struct Visible(bool);
-
-#[derive(Bundle)]
-struct FloorBundle {
-    floor: FloorLegacy,
-    size: Size,
-    position: Position,
-}
-
-#[derive(Component)]
-struct FloorLegacy;
-
-#[derive(Component)]
-struct Size {
-    width: u32,
-    depth: u32,
-}
 
 #[derive(Component, Inspectable)]
 struct Speed(f32);
@@ -93,11 +81,12 @@ fn main() {
         .add_startup_system(setup)
         .add_startup_system(setup_audio)
         .add_startup_system(setup_levels)
-        .add_startup_system_to_stage(StartupStage::Startup, spawn_floor)
-        .add_startup_system_to_stage(StartupStage::PostStartup, spawn_tiles)
         .add_system(pause_audio)
         .add_system(move_camera)
         .add_system(manual_load_map)
+        .add_system(manual_spawn_map)
+        .add_system(manual_despawn_map)
+        .add_system(manual_unload_map)
         .run();
 }
 
@@ -128,7 +117,7 @@ fn load_map(level_to_load: &Level, mut query: Query<(&Level, &mut Map, &mut Posi
     for (level, mut map, mut position) in query.iter_mut() {
         if level == level_to_load {
             // if the map is already loaded, quit the system
-            if !map.floors.is_empty() {
+            if map.is_loaded() {
                 return;
             }
             // get data through arguments
@@ -285,37 +274,106 @@ fn setup(mut commands: Commands) {
     });
 }
 
-fn spawn_floor(mut commands: Commands) {
-    commands.spawn_bundle(FloorBundle {
-        floor: FloorLegacy,
-        size: Size { width: 5, depth: 4 },
-        position: Position(Vec3::new(0.0, 0.0, 0.0)),
-    });
+fn manual_spawn_map(
+    commands: Commands,
+    meshes: ResMut<Assets<Mesh>>,
+    materials: ResMut<Assets<StandardMaterial>>,
+    query: Query<(&Level, &Map, &Position, &mut Visible)>,
+    keyboard_input: Res<Input<KeyCode>>,
+) {
+    // manual event to spawn map
+    if keyboard_input.pressed(KeyCode::P) {
+        spawn_map(commands, meshes, materials, query);
+    }
 }
 
-fn spawn_tiles(
+fn spawn_map(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    query: Query<(&Size, &Position), With<FloorLegacy>>,
+    mut query: Query<(&Level, &Map, &Position, &mut Visible)>,
 ) {
     let mesh = Mesh::from(shape::Cube { size: 1.0 });
     let material = StandardMaterial::from(Color::rgb(230. / 255., 230. / 255., 230. / 255.));
 
-    for (size, position) in query.iter() {
-        let y = position.0.y;
-        for i in 0..size.width {
-            for j in 0..size.depth {
-                let x = (i as f32) - 0.5 * (size.width as f32) + 0.5;
-                let z = (j as f32) - 0.5 * (size.depth as f32) + 0.5;
-                commands
-                    .spawn_bundle(PbrBundle {
-                        mesh: meshes.add(mesh.clone()),
-                        material: materials.add(material.clone()),
-                        transform: Transform::from_translation(Vec3::new(x, y, z)),
-                        ..default()
-                    })
-                    .insert(Tile);
+    // spawn maps that are invisible and loaded
+    for (level, map, position, mut visible) in query.iter_mut() {
+        if visible.0 || !map.is_loaded() {
+            continue;
+        }
+        let floors = map.floors.iter();
+        floors.for_each(|floor| {
+            let height = floor.height as f32;
+            for i in 0..map.width() {
+                for j in 0..map.depth() {
+                    // -1 means no tile.
+                    if floor.data[j][i] == -1 {
+                        continue;
+                    }
+                    let x = (map.width() - 1 - i) as f32 + position.0.x;
+                    let z = (map.depth() - 1 - j) as f32 + position.0.z;
+                    let y = floor.data[j][i] as f32 + height + position.0.y;
+                    commands
+                        .spawn_bundle(PbrBundle {
+                            mesh: meshes.add(mesh.clone()),
+                            material: materials.add(material.clone()),
+                            transform: Transform::from_translation(Vec3::new(x, y, z)),
+                            ..default()
+                        })
+                        .insert(Tile)
+                        .insert(level.clone());
+                }
+            }
+        });
+        visible.0 = true;
+    }
+}
+
+fn manual_unload_map(
+    keyboard_input: Res<Input<KeyCode>>,
+    query: Query<(&Level, &mut Map, &mut Position)>,
+) {
+    if keyboard_input.just_pressed(KeyCode::D) {
+        let level_to_unload = Level::TestMap;
+        unload_map(&level_to_unload, query);
+    }
+}
+
+// delete loaded map data
+fn unload_map(level_to_unload: &Level, mut query: Query<(&Level, &mut Map, &mut Position)>) {
+    for (level, mut map, mut position) in query.iter_mut() {
+        if level == level_to_unload {
+            map.floors = Vec::new();
+            position.0 = Vec3::ZERO;
+        }
+    }
+}
+
+fn manual_despawn_map(
+    commands: Commands,
+    query: Query<(Entity, &Level, Option<&mut Visible>, Option<&Tile>)>,
+    keyboard_input: Res<Input<KeyCode>>,
+) {
+    if keyboard_input.just_pressed(KeyCode::D) {
+        let level_to_despawn = Level::TestMap;
+        despawn_map(commands, query, &level_to_despawn);
+    }
+}
+
+fn despawn_map(
+    mut commands: Commands,
+    mut query: Query<(Entity, &Level, Option<&mut Visible>, Option<&Tile>)>,
+    level_to_despawn: &Level,
+) {
+    for (entity, level, visible, tile) in query.iter_mut() {
+        if level == level_to_despawn {
+            // despawn tiles
+            if tile.is_some() {
+                commands.entity(entity).despawn_recursive();
+            }
+            // set the map to be not visible
+            if let Some(mut visible) = visible {
+                visible.0 = false;
             }
         }
     }
