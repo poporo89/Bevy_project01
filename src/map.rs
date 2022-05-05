@@ -5,9 +5,6 @@ use pyo3::{
 };
 use std::env;
 
-#[derive(Component)]
-struct Tile;
-
 #[derive(Bundle)]
 struct LevelBundle {
     level: Level,
@@ -62,6 +59,9 @@ struct Position(Vec3);
 
 #[derive(Component, Default)]
 struct Visible(bool);
+
+#[derive(Component)]
+struct Tile;
 
 pub struct MapPlugin;
 

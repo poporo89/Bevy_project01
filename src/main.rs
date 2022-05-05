@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{app::App, DefaultPlugins};
 use bevy_inspector_egui::WorldInspectorPlugin;
 use bevy_project01::*;
 
