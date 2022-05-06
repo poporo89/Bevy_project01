@@ -1,8 +1,10 @@
 use bevy::prelude::*;
+use bevy_rhai::*;
 use pyo3::{
     prelude::*,
     types::{PyDict, PyList},
 };
+use rhai::plugin::*;
 use std::env;
 
 #[derive(Bundle)]
@@ -27,9 +29,9 @@ impl Level {
     }
 }
 
-#[derive(Component, Default, Debug)]
-struct Map {
-    floors: Vec<Floor>,
+#[derive(Component, Default, Debug, Clone)]
+pub struct Map {
+    pub floors: Vec<Floor>,
 }
 
 impl Map {
@@ -46,16 +48,44 @@ impl Map {
     fn is_loaded(&self) -> bool {
         !self.floors.is_empty()
     }
+
+    pub fn push(&mut self, floor: &Floor) {
+        self.floors.push(floor.clone());
+    }
 }
 
-#[derive(Debug)]
-struct Floor {
+#[derive(Debug, Default, Clone)]
+pub struct Floor {
     height: i32,
     data: Vec<Vec<i32>>,
 }
 
-#[derive(Component, Default)]
-struct Position(Vec3);
+impl Floor {
+    pub fn new() -> Self {
+        Self {
+            height: 0,
+            data: Vec::new(),
+        }
+    }
+
+    pub fn set_height(&mut self, height: i32) {
+        self.height = height;
+    }
+
+    pub fn set_data(&mut self, data: Dynamic) {
+        self.data = data.try_cast::<Vec<Vec<i32>>>().unwrap();
+    }
+}
+
+#[derive(Component, Default, Clone)]
+pub struct Position(Vec3);
+
+impl Position {
+    pub fn set_position(&mut self, position: Dynamic) {
+        let array: [f32; 3] = position.try_cast::<[f32; 3]>().unwrap();
+        self.0 = Vec3::from(array);
+    }
+}
 
 #[derive(Component, Default)]
 struct Visible(bool);
@@ -63,12 +93,23 @@ struct Visible(bool);
 #[derive(Component)]
 struct Tile;
 
+#[derive(Bundle, Default)]
+struct RhaiBundle {
+    engine: StandardEngine,
+    script_handle: Handle<StandardScript>,
+    scope: StandardScope,
+}
+
+//#[export_module]
+//mod map_editor_api {
+//pub fn
+//}
+
 pub struct MapPlugin;
 
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup_levels)
-            .add_system(test_mod)
             .add_system(manual_load_map)
             .add_system(manual_unload_map)
             .add_system(manual_spawn_map)
@@ -77,35 +118,101 @@ impl Plugin for MapPlugin {
 }
 
 // setup levels with empty maps
-fn setup_levels(mut commands: Commands) {
+fn setup_levels(mut commands: Commands, asset_server: Res<AssetServer>) {
     // test map
-    commands.spawn_bundle(LevelBundle {
-        level: Level::TestMap,
-        map: Map { floors: Vec::new() },
-        position: Position(Vec3::ZERO),
-        visible: Visible(false),
-    });
-}
-
-fn test_mod(keyboard_input: Res<Input<KeyCode>>) {
-    if keyboard_input.pressed(KeyCode::T) {
-        test();
-    }
-}
-
-fn test() {
-    println!("maptest");
+    commands
+        .spawn_bundle(LevelBundle {
+            level: Level::TestMap,
+            map: Map { floors: Vec::new() },
+            position: Position(Vec3::ZERO),
+            visible: Visible(false),
+        })
+        .insert_bundle(RhaiBundle {
+            engine: StandardEngine::with_engine({
+                let mut engine = Engine::new_raw();
+                engine.set_strict_variables(true);
+                engine.disable_symbol("eval")
+                .register_type_with_name::<Map>("Map")
+                .register_fn("push", Map::push)
+                .register_type_with_name::<Floor>("Floor")
+                .register_fn("new", Floor::new)
+                .register_set("height", Floor::set_height)
+                .register_set("data", Floor::set_data)
+                .register_type_with_name::<Position>("Position")
+                .register_set("xyz", Position::set_position)
+                //.register_global_module(exported_module!(map_editor_api).into())
+                ;
+                engine
+            }),
+            script_handle: {
+                let handle: Handle<StandardScript> = asset_server.load("scripts/map_editor.rhai");
+                asset_server.watch_for_changes().unwrap();
+                handle
+            },
+            ..default()
+        });
 }
 
 // load map at manual event
-fn manual_load_map(
+#[allow(dead_code)]
+fn manual_load_map_py(
     keyboard_input: Res<Input<KeyCode>>,
     query: Query<(&Level, &mut Map, &mut Position)>,
 ) {
+    let level_to_load = Level::TestMap;
     // manual event to load map
+    if keyboard_input.just_pressed(KeyCode::Q) {
+        load_map_py(&level_to_load, query);
+    }
+}
+
+#[allow(clippy::complexity)]
+fn manual_load_map(
+    keyboard_input: Res<Input<KeyCode>>,
+    scripts: Res<Assets<StandardScript>>,
+    query: Query<(
+        &Level,
+        &mut Map,
+        &mut Position,
+        &StandardEngine,
+        &Handle<StandardScript>,
+        &mut StandardScope,
+    )>,
+) {
     if keyboard_input.just_pressed(KeyCode::P) {
         let level_to_load = Level::TestMap;
-        load_map(&level_to_load, query);
+        load_map(&level_to_load, scripts, query);
+    }
+}
+
+#[allow(clippy::complexity)]
+fn load_map(
+    level_to_load: &Level,
+    scripts: Res<Assets<StandardScript>>,
+    mut query: Query<(
+        &Level,
+        &mut Map,
+        &mut Position,
+        &StandardEngine,
+        &Handle<StandardScript>,
+        &mut StandardScope,
+    )>,
+) {
+    for (level, mut map, mut position, engine, script, mut scope) in query.iter_mut() {
+        if level == level_to_load {
+            // if the map is already loaded, quite the system
+            if map.is_loaded() {
+                return;
+            }
+            if let Some(script) = scripts.get(script) {
+                scope.set_or_push("map", map.clone());
+                scope.set_or_push("position", position.clone());
+                engine.run_ast_with_scope(&mut scope, &script.ast).unwrap();
+                *map = scope.get_value("map").unwrap();
+                *position = scope.get_value("position").unwrap();
+                println!("{:?}", map);
+            }
+        }
     }
 }
 
@@ -143,7 +250,8 @@ fn manual_despawn_map(
     }
 }
 
-fn load_map(level_to_load: &Level, mut query: Query<(&Level, &mut Map, &mut Position)>) {
+#[allow(dead_code)]
+fn load_map_py(level_to_load: &Level, mut query: Query<(&Level, &mut Map, &mut Position)>) {
     for (level, mut map, mut position) in query.iter_mut() {
         if level == level_to_load {
             // if the map is already loaded, quit the system
@@ -226,6 +334,7 @@ fn unload_map(level_to_unload: &Level, mut query: Query<(&Level, &mut Map, &mut 
         if level == level_to_unload {
             map.floors = Vec::new();
             position.0 = Vec3::ZERO;
+            return;
         }
     }
 }

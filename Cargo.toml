@@ -14,3 +14,9 @@ version = "0.10"
 [dependencies.pyo3]
 version = "0.16.4"
 features = ["auto-initialize"]
+
+[dependencies.bevy_rhai]
+version = "0.3.0"
+
+[dependencies.rhai]
+version = "1.7.0"
