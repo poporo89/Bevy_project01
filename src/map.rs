@@ -54,7 +54,7 @@ impl Map {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Component, Debug, Default, Clone)]
 pub struct Floor {
     height: i32,
     data: Vec<Vec<i32>>,
@@ -119,6 +119,8 @@ impl Plugin for MapPlugin {
 
 // setup levels with empty maps
 fn setup_levels(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let handle: Handle<StandardScript> = asset_server.load("scripts/map_editor.rhai");
+    asset_server.watch_for_changes().unwrap();
     // test map
     commands
         .spawn_bundle(LevelBundle {
@@ -132,25 +134,22 @@ fn setup_levels(mut commands: Commands, asset_server: Res<AssetServer>) {
                 let mut engine = Engine::new_raw();
                 engine.set_strict_variables(true);
                 engine.disable_symbol("eval")
-                .register_type_with_name::<Map>("Map")
-                .register_fn("push", Map::push)
+                //.register_type_with_name::<Map>("Map")
+                //.register_fn("push", Map::push)
                 .register_type_with_name::<Floor>("Floor")
                 .register_fn("new", Floor::new)
                 .register_set("height", Floor::set_height)
                 .register_set("data", Floor::set_data)
-                .register_type_with_name::<Position>("Position")
-                .register_set("xyz", Position::set_position)
+                //.register_type_with_name::<Position>("Position")
+                //.register_set("xyz", Position::set_position)
                 //.register_global_module(exported_module!(map_editor_api).into())
                 ;
                 engine
             }),
-            script_handle: {
-                let handle: Handle<StandardScript> = asset_server.load("scripts/map_editor.rhai");
-                asset_server.watch_for_changes().unwrap();
-                handle
-            },
-            ..default()
-        });
+            script_handle: handle,
+            scope: StandardScope::default(),
+        })
+        .insert(Floor::default());
 }
 
 // load map at manual event
@@ -171,9 +170,7 @@ fn manual_load_map(
     keyboard_input: Res<Input<KeyCode>>,
     scripts: Res<Assets<StandardScript>>,
     query: Query<(
-        &Level,
-        &mut Map,
-        &mut Position,
+        &mut Floor,
         &StandardEngine,
         &Handle<StandardScript>,
         &mut StandardScope,
@@ -182,36 +179,33 @@ fn manual_load_map(
     if keyboard_input.just_pressed(KeyCode::P) {
         let level_to_load = Level::TestMap;
         load_map(&level_to_load, scripts, query);
+        println!("po");
     }
 }
 
 #[allow(clippy::complexity)]
 fn load_map(
-    level_to_load: &Level,
+    _level_to_load: &Level,
     scripts: Res<Assets<StandardScript>>,
     mut query: Query<(
-        &Level,
-        &mut Map,
-        &mut Position,
+        &mut Floor,
         &StandardEngine,
         &Handle<StandardScript>,
         &mut StandardScope,
     )>,
 ) {
-    for (level, mut map, mut position, engine, script, mut scope) in query.iter_mut() {
-        if level == level_to_load {
-            // if the map is already loaded, quite the system
-            if map.is_loaded() {
-                return;
-            }
-            if let Some(script) = scripts.get(script) {
-                scope.set_or_push("map", map.clone());
-                scope.set_or_push("position", position.clone());
-                engine.run_ast_with_scope(&mut scope, &script.ast).unwrap();
-                *map = scope.get_value("map").unwrap();
-                *position = scope.get_value("position").unwrap();
-                println!("{:?}", map);
-            }
+    for (_floor, engine, script, mut scope) in query.iter_mut() {
+        if let Some(script) = scripts.get(script) {
+            println!("popopo");
+            let _h: i32 = 10;
+            //scope.set_or_push("map", map.clone());
+            //scope.set_or_push("position", position.clone());
+            //engine.run_ast_with_scope(&mut scope, &script.ast).unwrap();
+            //let hp: i32 = scope.get_value("h").unwrap();
+            let hp: i32 = engine
+                .call_fn(&mut scope, &script.ast, "hello", (10_i32,))
+                .unwrap();
+            info!("hp: {:?}", hp);
         }
     }
 }
@@ -269,7 +263,7 @@ fn load_map_py(level_to_load: &Level, mut query: Query<(&Level, &mut Map, &mut P
             // store map data to the map component
             map.floors = floor_data;
             position.0 = position_data;
-            println!("{}", format!("{:?}", map));
+            //println!("{}", format!("{:?}", map));
         }
     }
 }
