@@ -1,4 +1,4 @@
-use bevy::{core::FixedTimestep, prelude::*, DefaultPlugins};
+use bevy::{prelude::*, DefaultPlugins};
 use bevy_inspector_egui::WorldInspectorPlugin;
 use bevy_project01::*;
 use bevy_rhai::*;
