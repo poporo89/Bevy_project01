@@ -171,7 +171,7 @@ fn manual_load_map(
 
 #[allow(clippy::complexity)]
 fn load_map(
-    _level_to_load: &Level,
+    level_to_load: &Level,
     scripts: Res<Assets<StandardScript>>,
     mut query: Query<(
         &mut Map,
@@ -183,7 +183,7 @@ fn load_map(
     for (mut map, engine, script, mut scope) in query.iter_mut() {
         if let Some(script) = scripts.get(script) {
             let a: Vec<Dynamic> = engine
-                .call_fn(&mut scope, &script.ast, "map_test", ())
+                .call_fn(&mut scope, &script.ast, level_to_load.name(), ())
                 .unwrap();
             for po in a.into_iter() {
                 let mut floor = Floor::new();

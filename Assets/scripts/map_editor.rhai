@@ -1,6 +1,6 @@
 // Before edit map data, :set lsp=4 without mode lines.
 
-fn map_test() {
+fn test_map() {
     let map = [];
 
     // floor: 1
