@@ -39,24 +39,21 @@ fn move_camera(
     timer: Res<Time>,
 ) {
     let (mut transform, speed) = query.single_mut();
+    let sqrt = std::f32::consts::SQRT_2;
 
     if keyboard_input.pressed(KeyCode::J) {
-        transform.translation -=
-            (Vec3::X + Vec3::Z) / 2.0_f32.sqrt() * speed.0 * timer.delta_seconds();
+        transform.translation -= (Vec3::X + Vec3::Z) / sqrt * speed.0 * timer.delta_seconds();
     }
 
     if keyboard_input.pressed(KeyCode::K) {
-        transform.translation +=
-            (Vec3::X + Vec3::Z) / 2.0_f32.sqrt() * speed.0 * timer.delta_seconds();
+        transform.translation += (Vec3::X + Vec3::Z) / sqrt * speed.0 * timer.delta_seconds();
     }
 
     if keyboard_input.pressed(KeyCode::H) {
-        transform.translation +=
-            (Vec3::X - Vec3::Z) / 2.0_f32.sqrt() * speed.0 * timer.delta_seconds();
+        transform.translation += (Vec3::X - Vec3::Z) / sqrt * speed.0 * timer.delta_seconds();
     }
 
     if keyboard_input.pressed(KeyCode::L) {
-        transform.translation -=
-            (Vec3::X - Vec3::Z) / 2.0_f32.sqrt() * speed.0 * timer.delta_seconds();
+        transform.translation -= (Vec3::X - Vec3::Z) / sqrt * speed.0 * timer.delta_seconds();
     }
 }
