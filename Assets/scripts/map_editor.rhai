@@ -1,6 +1,10 @@
 // Before edit map data, :set lsp=4 without mode lines.
 
 fn test_map() {
+    // position data
+    let position = [1.0, 0.0, 0.0];
+
+    // map data
     let map = [];
 
     // floor: 1
@@ -23,5 +27,7 @@ fn test_map() {
     let floor = #{ height: height, data: data };
     map += floor;
 
-    map
+    // return result
+    let result = #{position: position, map: map};
+    result
 }

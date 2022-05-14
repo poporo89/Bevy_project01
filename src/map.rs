@@ -64,7 +64,7 @@ impl Floor {
     }
 }
 
-#[derive(Component, Default, Clone)]
+#[derive(Component, Debug, Default, Clone)]
 pub struct Position(Vec3);
 
 impl Position {
@@ -130,6 +130,7 @@ fn manual_load_map(
     scripts: Res<Assets<StandardScript>>,
     query: Query<(
         &mut Map,
+        &mut Position,
         &StandardEngine,
         &Handle<StandardScript>,
         &mut StandardScope,
@@ -147,35 +148,51 @@ fn load_map(
     scripts: Res<Assets<StandardScript>>,
     mut query: Query<(
         &mut Map,
+        &mut Position,
         &StandardEngine,
         &Handle<StandardScript>,
         &mut StandardScope,
     )>,
 ) {
-    for (mut map, engine, script, mut scope) in query.iter_mut() {
+    for (mut map, mut position, engine, script, mut scope) in query.iter_mut() {
         if let Some(script) = scripts.get(script) {
-            let a: Vec<Dynamic> = engine
+            let a: rhai::Map = engine
                 .call_fn(&mut scope, &script.ast, level_to_load.name(), ())
                 .unwrap();
-            for po in a.into_iter() {
-                let mut floor = Floor::new();
-                let item = po.try_cast::<rhai::Map>().unwrap();
-                if let Some((key, value)) = item.iter().next_back() {
-                    if key == "height" {
-                        let height = value.clone_cast::<i32>();
-                        floor.height = height;
+            if let Some((k, v)) = a.iter().next_back() {
+                if k == "position" {
+                    let pop = v.clone_cast::<rhai::Array>();
+                    let vec: Vec<f32> = pop
+                        .into_iter()
+                        .map(|item| item.try_cast::<f32>().unwrap())
+                        .collect();
+                    position.0 = Vec3::new(vec[0], vec[1], vec[2]);
+                }
+            }
+            if let Some((k, v)) = a.iter().next() {
+                if k == "map" {
+                    let m = v.clone_cast::<Vec<Dynamic>>();
+                    for po in m.into_iter() {
+                        let mut floor = Floor::new();
+                        let item = po.try_cast::<rhai::Map>().unwrap();
+                        if let Some((key, value)) = item.iter().next_back() {
+                            if key == "height" {
+                                let height = value.clone_cast::<i32>();
+                                floor.height = height;
+                            }
+                        }
+                        if let Some((key, value)) = item.iter().next() {
+                            if key == "data" {
+                                let floors = value.clone_cast::<rhai::Array>();
+                                floor.data = floors
+                                    .into_iter()
+                                    .map(|item| item.into_typed_array::<i32>().unwrap())
+                                    .collect();
+                            }
+                        }
+                        map.push(&floor);
                     }
                 }
-                if let Some((key, value)) = item.iter().next() {
-                    if key == "data" {
-                        let floors = value.clone_cast::<rhai::Array>();
-                        floor.data = floors
-                            .into_iter()
-                            .map(|item| item.into_typed_array::<i32>().unwrap())
-                            .collect();
-                    }
-                }
-                map.push(&floor);
             }
         }
     }
