@@ -25,8 +25,8 @@ impl Level {
 }
 
 #[derive(Component, Default, Debug, Clone)]
-pub struct Map {
-    pub floors: Vec<Floor>,
+struct Map {
+    floors: Vec<Floor>,
 }
 
 impl Map {
@@ -44,19 +44,19 @@ impl Map {
         !self.floors.is_empty()
     }
 
-    pub fn push(&mut self, floor: &Floor) {
+    fn push(&mut self, floor: &Floor) {
         self.floors.push(floor.clone());
     }
 }
 
 #[derive(Component, Debug, Default, Clone)]
-pub struct Floor {
+struct Floor {
     height: i32,
     data: Vec<Vec<i32>>,
 }
 
 impl Floor {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             height: 0,
             data: Vec::new(),
