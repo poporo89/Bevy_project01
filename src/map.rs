@@ -240,21 +240,25 @@ fn spawn_map(
         }
         let floors = map.floors.iter();
         floors.for_each(|floor| {
-            let height = floor.height as f32;
+            let floor_height = floor.height as f32;
             for i in 0..map.width() {
                 for j in 0..map.depth() {
                     // -1 means no tile.
                     if floor.data[j][i] == -1 {
                         continue;
                     }
+                    let offset = 0.5;
+                    let tile_height = floor.data[j][i] as f32 + offset;
                     let x = (map.width() - 1 - i) as f32 + position.0.x;
                     let z = (map.depth() - 1 - j) as f32 + position.0.z;
-                    let y = floor.data[j][i] as f32 + height + position.0.y;
+                    let y = (tile_height - offset) / 2.0 + floor_height + position.0.y;
+                    let scale = Vec3::new(1.0, tile_height, 1.0);
                     commands
                         .spawn_bundle(PbrBundle {
                             mesh: meshes.add(mesh.clone()),
                             material: materials.add(material.clone()),
-                            transform: Transform::from_translation(Vec3::new(x, y, z)),
+                            transform: Transform::from_translation(Vec3::new(x, y, z))
+                                .with_scale(scale),
                             ..default()
                         })
                         .insert(Tile)
