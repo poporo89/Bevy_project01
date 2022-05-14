@@ -159,38 +159,37 @@ fn load_map(
             let a: rhai::Map = engine
                 .call_fn(&mut scope, &script.ast, level_to_load.name(), ())
                 .unwrap();
-            if let Some((k, v)) = a.iter().next_back() {
-                if k == "position" {
-                    let pop = v.clone_cast::<rhai::Array>();
-                    let vec: Vec<f32> = pop
+            if let Some((map_key, map_value)) = a.iter().next_back() {
+                if map_key == "position" {
+                    let raw_position = map_value.clone_cast::<rhai::Array>();
+                    let vec: Vec<f32> = raw_position
                         .into_iter()
                         .map(|item| item.try_cast::<f32>().unwrap())
                         .collect();
                     position.0 = Vec3::new(vec[0], vec[1], vec[2]);
                 }
             }
-            if let Some((k, v)) = a.iter().next() {
-                if k == "map" {
-                    let m = v.clone_cast::<Vec<Dynamic>>();
-                    for po in m.into_iter() {
-                        let mut floor = Floor::new();
-                        let item = po.try_cast::<rhai::Map>().unwrap();
-                        if let Some((key, value)) = item.iter().next_back() {
-                            if key == "height" {
-                                let height = value.clone_cast::<i32>();
-                                floor.height = height;
+            if let Some((map_key, map_value)) = a.iter().next() {
+                if map_key == "map" {
+                    for raw_floor in map_value.clone_cast::<Vec<Dynamic>>().into_iter() {
+                        let mut temp_floor = Floor::new();
+                        let parsed_floor = raw_floor.try_cast::<rhai::Map>().unwrap();
+                        if let Some((floor_key, floor_value)) = parsed_floor.iter().next_back() {
+                            if floor_key == "height" {
+                                let height = floor_value.clone_cast::<i32>();
+                                temp_floor.height = height;
                             }
                         }
-                        if let Some((key, value)) = item.iter().next() {
-                            if key == "data" {
-                                let floors = value.clone_cast::<rhai::Array>();
-                                floor.data = floors
+                        if let Some((floor_key, floor_value)) = parsed_floor.iter().next() {
+                            if floor_key == "data" {
+                                let data = floor_value.clone_cast::<rhai::Array>();
+                                temp_floor.data = data
                                     .into_iter()
                                     .map(|item| item.into_typed_array::<i32>().unwrap())
                                     .collect();
                             }
                         }
-                        map.push(&floor);
+                        map.push(&temp_floor);
                     }
                 }
             }
