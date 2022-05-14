@@ -1,19 +1,27 @@
 // Before edit map data, :set lsp=4 without mode lines.
 
-fn floor_set(x) {
-    let floor = floor_new();
-    floor.height = x;
-    let data = [ 0, 0, 0];
-    floor.data = data;
-    floor
-}
+fn map_test() {
+    let map = [];
 
-fn array_test() {
+    // floor: 1
+    let height = 0;
     let data = [
-        [ 1, 1, 1,],
-        [ 1, 1, 1,],
-        [ 1, 1, 1,],
+        [ 0, 0, 0,],
+        [ 0, 0, 0,],
+        [ 0, 0, 0,],
     ];
-    data
-}
+    let floor = #{ height: height, data: data };
+    map += floor;
 
+    // floor: 2
+    let height = 1;
+    let data = [
+        [-1,-1,-1,],
+        [-1, 3,-1,],
+        [-1,-1,-1,],
+    ];
+    let floor = #{ height: height, data: data };
+    map += floor;
+
+    map
+}

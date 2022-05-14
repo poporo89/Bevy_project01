@@ -184,7 +184,6 @@ fn manual_load_map(
     if keyboard_input.just_pressed(KeyCode::P) {
         let level_to_load = Level::TestMap;
         load_map(&level_to_load, scripts, query);
-        println!("po");
     }
 }
 
@@ -201,16 +200,29 @@ fn load_map(
 ) {
     for (mut map, engine, script, mut scope) in query.iter_mut() {
         if let Some(script) = scripts.get(script) {
-            println!("popopo");
-            let mut floor = Floor::new();
-            let result: Vec<Dynamic> = engine
-                .call_fn(&mut scope, &script.ast, "array_test", ())
+            let a: Vec<Dynamic> = engine
+                .call_fn(&mut scope, &script.ast, "map_test", ())
                 .unwrap();
-            floor.data = result
-                .into_iter()
-                .map(|item| item.into_typed_array::<i32>().unwrap())
-                .collect();
-            map.push(&floor);
+            for po in a.into_iter() {
+                let mut floor = Floor::new();
+                let item = po.try_cast::<rhai::Map>().unwrap();
+                if let Some((key, value)) = item.iter().next_back() {
+                    if key == "height" {
+                        let height = value.clone_cast::<i32>();
+                        floor.height = height;
+                    }
+                }
+                if let Some((key, value)) = item.iter().next() {
+                    if key == "data" {
+                        let floors = value.clone_cast::<rhai::Array>();
+                        floor.data = floors
+                            .into_iter()
+                            .map(|item| item.into_typed_array::<i32>().unwrap())
+                            .collect();
+                    }
+                }
+                map.push(&floor);
+            }
             println!("{:?}", &map);
         }
     }
