@@ -153,7 +153,7 @@ fn load_map(
             let result: rhai::Map = engine
                 .call_fn(&mut scope, &script.ast, level_to_load.name(), ())
                 .unwrap();
-            if let Some((map_key, map_value)) = result.iter().next_back() {
+            for (map_key, map_value) in result.iter() {
                 if map_key == "position" {
                     let raw_position = map_value.clone_cast::<rhai::Array>();
                     let vec: Vec<f32> = raw_position
@@ -162,8 +162,6 @@ fn load_map(
                         .collect();
                     position.0 = Vec3::new(vec[0], vec[1], vec[2]);
                 }
-            }
-            if let Some((map_key, map_value)) = result.iter().next() {
                 if map_key == "floors" {
                     for raw_floor in map_value.clone_cast::<Vec<Dynamic>>().into_iter() {
                         let mut temp_floor = Floor::new();
