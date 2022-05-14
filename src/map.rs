@@ -208,6 +208,17 @@ fn manual_unload_map(
     }
 }
 
+// delete loaded map data
+fn unload_map(level_to_unload: &Level, mut query: Query<(&Level, &mut Map, &mut Position)>) {
+    for (level, mut map, mut position) in query.iter_mut() {
+        if level == level_to_unload {
+            map.floors = Vec::new();
+            position.0 = Vec3::ZERO;
+            return;
+        }
+    }
+}
+
 fn manual_spawn_map(
     commands: Commands,
     meshes: ResMut<Assets<Mesh>>,
@@ -218,28 +229,6 @@ fn manual_spawn_map(
     // manual event to spawn map
     if keyboard_input.pressed(KeyCode::P) {
         spawn_map(commands, meshes, materials, query);
-    }
-}
-
-fn manual_despawn_map(
-    commands: Commands,
-    query: Query<(Entity, &Level, Option<&mut Visible>, Option<&Tile>)>,
-    keyboard_input: Res<Input<KeyCode>>,
-) {
-    if keyboard_input.just_pressed(KeyCode::D) {
-        let level_to_despawn = Level::TestMap;
-        despawn_map(commands, query, &level_to_despawn);
-    }
-}
-
-// delete loaded map data
-fn unload_map(level_to_unload: &Level, mut query: Query<(&Level, &mut Map, &mut Position)>) {
-    for (level, mut map, mut position) in query.iter_mut() {
-        if level == level_to_unload {
-            map.floors = Vec::new();
-            position.0 = Vec3::ZERO;
-            return;
-        }
     }
 }
 
@@ -282,6 +271,17 @@ fn spawn_map(
             }
         });
         visible.0 = true;
+    }
+}
+
+fn manual_despawn_map(
+    commands: Commands,
+    query: Query<(Entity, &Level, Option<&mut Visible>, Option<&Tile>)>,
+    keyboard_input: Res<Input<KeyCode>>,
+) {
+    if keyboard_input.just_pressed(KeyCode::D) {
+        let level_to_despawn = Level::TestMap;
+        despawn_map(commands, query, &level_to_despawn);
     }
 }
 
