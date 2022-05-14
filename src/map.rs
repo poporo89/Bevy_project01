@@ -73,7 +73,12 @@ impl Floor {
     }
 
     pub fn set_data(&mut self, data: Dynamic) {
-        self.data = data.try_cast::<Vec<Vec<i32>>>().unwrap();
+        let result = data.try_cast::<Vec<i32>>();
+        if let Some(data) = result {
+            self.data.push(data);
+        } else {
+            println!("no data");
+        }
     }
 }
 
@@ -134,10 +139,10 @@ fn setup_levels(mut commands: Commands, asset_server: Res<AssetServer>) {
                 let mut engine = Engine::new_raw();
                 engine.set_strict_variables(true);
                 engine.disable_symbol("eval")
-                //.register_type_with_name::<Map>("Map")
-                //.register_fn("push", Map::push)
+                .register_type_with_name::<Map>("Map")
+                .register_fn("push", Map::push)
                 .register_type_with_name::<Floor>("Floor")
-                .register_fn("new", Floor::new)
+                .register_fn("floor_new", Floor::new)
                 .register_set("height", Floor::set_height)
                 .register_set("data", Floor::set_data)
                 //.register_type_with_name::<Position>("Position")
@@ -170,7 +175,7 @@ fn manual_load_map(
     keyboard_input: Res<Input<KeyCode>>,
     scripts: Res<Assets<StandardScript>>,
     query: Query<(
-        &mut Floor,
+        &mut Map,
         &StandardEngine,
         &Handle<StandardScript>,
         &mut StandardScope,
@@ -188,24 +193,25 @@ fn load_map(
     _level_to_load: &Level,
     scripts: Res<Assets<StandardScript>>,
     mut query: Query<(
-        &mut Floor,
+        &mut Map,
         &StandardEngine,
         &Handle<StandardScript>,
         &mut StandardScope,
     )>,
 ) {
-    for (_floor, engine, script, mut scope) in query.iter_mut() {
+    for (mut map, engine, script, mut scope) in query.iter_mut() {
         if let Some(script) = scripts.get(script) {
             println!("popopo");
-            let _h: i32 = 10;
-            //scope.set_or_push("map", map.clone());
-            //scope.set_or_push("position", position.clone());
-            //engine.run_ast_with_scope(&mut scope, &script.ast).unwrap();
-            //let hp: i32 = scope.get_value("h").unwrap();
-            let hp: i32 = engine
-                .call_fn(&mut scope, &script.ast, "hello", (10_i32,))
+            let mut floor = Floor::new();
+            let result: Vec<Dynamic> = engine
+                .call_fn(&mut scope, &script.ast, "array_test", ())
                 .unwrap();
-            info!("hp: {:?}", hp);
+            floor.data = result
+                .into_iter()
+                .map(|item| item.into_typed_array::<i32>().unwrap())
+                .collect();
+            map.push(&floor);
+            println!("{:?}", &map);
         }
     }
 }
