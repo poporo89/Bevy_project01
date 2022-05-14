@@ -10,7 +10,7 @@ struct LevelBundle {
     visible: Visible,
 }
 
-#[derive(Component, PartialEq, Eq, Clone)]
+#[derive(Component, PartialEq, Clone)]
 enum Level {
     TestMap,
 }
@@ -62,19 +62,6 @@ impl Floor {
             data: Vec::new(),
         }
     }
-
-    pub fn set_height(&mut self, height: i32) {
-        self.height = height;
-    }
-
-    pub fn set_data(&mut self, data: Dynamic) {
-        let result = data.try_cast::<Vec<i32>>();
-        if let Some(data) = result {
-            self.data.push(data);
-        } else {
-            println!("no data");
-        }
-    }
 }
 
 #[derive(Component, Default, Clone)]
@@ -99,11 +86,6 @@ struct RhaiBundle {
     script_handle: Handle<StandardScript>,
     scope: StandardScope,
 }
-
-//#[export_module]
-//mod map_editor_api {
-//pub fn
-//}
 
 pub struct MapPlugin;
 
@@ -133,17 +115,7 @@ fn setup_levels(mut commands: Commands, asset_server: Res<AssetServer>) {
             engine: StandardEngine::with_engine({
                 let mut engine = Engine::new_raw();
                 engine.set_strict_variables(true);
-                engine.disable_symbol("eval")
-                .register_type_with_name::<Map>("Map")
-                .register_fn("push", Map::push)
-                .register_type_with_name::<Floor>("Floor")
-                .register_fn("floor_new", Floor::new)
-                .register_set("height", Floor::set_height)
-                .register_set("data", Floor::set_data)
-                //.register_type_with_name::<Position>("Position")
-                //.register_set("xyz", Position::set_position)
-                //.register_global_module(exported_module!(map_editor_api).into())
-                ;
+                engine.disable_symbol("eval");
                 engine
             }),
             script_handle: handle,
@@ -205,7 +177,6 @@ fn load_map(
                 }
                 map.push(&floor);
             }
-            println!("{:?}", &map);
         }
     }
 }
