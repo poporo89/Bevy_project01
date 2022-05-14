@@ -12,6 +12,7 @@ pub struct CameraPlugin;
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Msaa { samples: 4 })
+            .insert_resource(ClearColor(Color::rgb(0.0, 0.0, 0.0)))
             .register_inspectable::<Speed>()
             .add_startup_system(setup_camera)
             .add_system(move_camera);
