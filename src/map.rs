@@ -65,14 +65,7 @@ impl Floor {
 }
 
 #[derive(Component, Debug, Default, Clone)]
-pub struct Position(Vec3);
-
-impl Position {
-    pub fn set_position(&mut self, position: Dynamic) {
-        let array: [f32; 3] = position.try_cast::<[f32; 3]>().unwrap();
-        self.0 = Vec3::from(array);
-    }
-}
+struct Position(Vec3);
 
 #[derive(Component, Default)]
 struct Visible(bool);
