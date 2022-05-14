@@ -101,6 +101,7 @@ fn setup_levels(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn_bundle(LevelBundle {
             level: Level::TestMap,
             map: Map { floors: Vec::new() },
+            map: Map {
             position: Position(Vec3::ZERO),
             visible: Visible(false),
         })
@@ -163,7 +164,7 @@ fn load_map(
                 }
             }
             if let Some((map_key, map_value)) = result.iter().next() {
-                if map_key == "map" {
+                if map_key == "floors" {
                     for raw_floor in map_value.clone_cast::<Vec<Dynamic>>().into_iter() {
                         let mut temp_floor = Floor::new();
                         let parsed_floor = raw_floor.try_cast::<rhai::Map>().unwrap();
