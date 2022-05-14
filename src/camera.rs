@@ -18,9 +18,8 @@ impl Plugin for CameraPlugin {
     }
 }
 
-// set up a simple 3D scene
+// set up a camera
 fn setup_camera(mut commands: Commands) {
-    // set up a camera
     let position = Vec3::new(7.0, 20.0, 7.0);
     let height = position.y;
     let mut camera = OrthographicCameraBundle::new_3d();
@@ -29,14 +28,13 @@ fn setup_camera(mut commands: Commands) {
         .looking_at(Vec3::ZERO, Vec3::Y)
         .with_translation(position);
 
-    // camera
     commands
         .spawn_bundle(camera)
         .insert(Speed(15.0))
         .insert(MovableCamera);
 }
 
-// move camera
+// move camera by hjkl
 fn move_camera(
     keyboard_input: Res<Input<KeyCode>>,
     mut query: Query<(&mut Transform, &Speed), With<MovableCamera>>,
