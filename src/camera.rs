@@ -23,7 +23,7 @@ fn setup_camera(mut commands: Commands) {
     // set up a camera
     let mut camera = OrthographicCameraBundle::new_3d();
     camera.orthographic_projection.scale = 10.0;
-    camera.transform = Transform::from_xyz(-10.0, 10.0, -10.0).looking_at(Vec3::ZERO, Vec3::Y);
+    camera.transform = Transform::from_xyz(-20.0, 20.0, -20.0).looking_at(Vec3::ZERO, Vec3::Y);
 
     // camera
     commands
