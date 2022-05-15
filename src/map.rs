@@ -149,33 +149,39 @@ fn load_map(
                 .call_fn(&mut scope, &script.ast, level_to_load.name(), ())
                 .unwrap();
             for (map_key, map_value) in result.iter() {
-                if map_key == "position" {
-                    let raw_position = map_value.clone_cast::<rhai::Array>();
-                    let vec: Vec<f32> = raw_position
-                        .into_iter()
-                        .map(|item| item.try_cast::<f32>().unwrap())
-                        .collect();
-                    position.0 = Vec3::new(vec[0], vec[1], vec[2]);
-                }
-                if map_key == "floors" {
-                    for raw_floor in map_value.clone_cast::<Vec<Dynamic>>().into_iter() {
-                        let mut temp_floor = Floor::new();
-                        let parsed_floor = raw_floor.try_cast::<rhai::Map>().unwrap();
-                        for (floor_key, floor_value) in parsed_floor.iter() {
-                            if floor_key == "height" {
-                                let height = floor_value.clone_cast::<i32>();
-                                temp_floor.height = height;
-                            }
-                            if floor_key == "data" {
-                                let data = floor_value.clone_cast::<rhai::Array>();
-                                temp_floor.data = data
-                                    .into_iter()
-                                    .map(|item| item.into_typed_array::<i32>().unwrap())
-                                    .collect();
-                            }
-                        }
-                        map.floors.push(temp_floor);
+                match map_key.as_str() {
+                    "position" => {
+                        let raw_position = map_value.clone_cast::<rhai::Array>();
+                        let vec: Vec<f32> = raw_position
+                            .into_iter()
+                            .map(|item| item.try_cast::<f32>().unwrap())
+                            .collect();
+                        position.0 = Vec3::new(vec[0], vec[1], vec[2]);
                     }
+                    "floors" => {
+                        for raw_floor in map_value.clone_cast::<Vec<Dynamic>>().into_iter() {
+                            let mut temp_floor = Floor::new();
+                            let parsed_floor = raw_floor.try_cast::<rhai::Map>().unwrap();
+                            for (floor_key, floor_value) in parsed_floor.iter() {
+                                match floor_key.as_str() {
+                                    "height" => {
+                                        let height = floor_value.clone_cast::<i32>();
+                                        temp_floor.height = height;
+                                    }
+                                    "data" => {
+                                        let data = floor_value.clone_cast::<rhai::Array>();
+                                        temp_floor.data = data
+                                            .into_iter()
+                                            .map(|item| item.into_typed_array::<i32>().unwrap())
+                                            .collect();
+                                    }
+                                    _ => {}
+                                }
+                            }
+                            map.floors.push(temp_floor);
+                        }
+                    }
+                    _ => {}
                 }
             }
         }
