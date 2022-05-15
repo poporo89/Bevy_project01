@@ -43,10 +43,6 @@ impl Map {
     fn is_loaded(&self) -> bool {
         !self.floors.is_empty()
     }
-
-    fn push(&mut self, floor: &Floor) {
-        self.floors.push(floor.clone());
-    }
 }
 
 #[derive(Component, Debug, Default, Clone)]
@@ -166,13 +162,11 @@ fn load_map(
                     for raw_floor in map_value.clone_cast::<Vec<Dynamic>>().into_iter() {
                         let mut temp_floor = Floor::new();
                         let parsed_floor = raw_floor.try_cast::<rhai::Map>().unwrap();
-                        if let Some((floor_key, floor_value)) = parsed_floor.iter().next_back() {
+                        for (floor_key, floor_value) in parsed_floor.iter() {
                             if floor_key == "height" {
                                 let height = floor_value.clone_cast::<i32>();
                                 temp_floor.height = height;
                             }
-                        }
-                        if let Some((floor_key, floor_value)) = parsed_floor.iter().next() {
                             if floor_key == "data" {
                                 let data = floor_value.clone_cast::<rhai::Array>();
                                 temp_floor.data = data
@@ -181,7 +175,7 @@ fn load_map(
                                     .collect();
                             }
                         }
-                        map.push(&temp_floor);
+                        map.floors.push(temp_floor);
                     }
                 }
             }
