@@ -97,7 +97,6 @@ fn setup_levels(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn_bundle(LevelBundle {
             level: Level::TestMap,
             map: Map { floors: Vec::new() },
-            map: Map {
             position: Position(Vec3::ZERO),
             visible: Visible(false),
         })
