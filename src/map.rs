@@ -16,7 +16,7 @@ enum Level {
 }
 
 impl Level {
-    // bind lebels to Python method names
+    // bind levels to Python method names
     fn name(&self) -> &str {
         match *self {
             Level::TestMap => "test_map",
