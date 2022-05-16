@@ -251,12 +251,24 @@ fn spawn_map(
                     let z = (map.depth() - 1 - j) as f32 + position.0.z + 0.5;
                     let y = tile_height / 2.0 + floor_height + position.0.y;
                     let scale = Vec3::new(1.0, tile_height, 1.0);
+                    if floor.data[j][i] != 0 {
+                        commands
+                            .spawn_bundle(PbrBundle {
+                                mesh: meshes.add(mesh.clone()),
+                                material: materials.add(material.clone()),
+                                transform: Transform::from_translation(Vec3::new(x, y, z))
+                                    .with_scale(scale),
+                                ..default()
+                            })
+                            .insert(Tile)
+                            .insert(level.clone());
+                    }
                     commands
                         .spawn_bundle(PbrBundle {
                             mesh: meshes.add(mesh.clone()),
                             material: materials.add(material.clone()),
-                            transform: Transform::from_translation(Vec3::new(x, y, z))
-                                .with_scale(scale),
+                            transform: Transform::from_translation(Vec3::new(x, -0.25, z))
+                                .with_scale(Vec3::new(1.0, 0.5, 1.0)),
                             ..default()
                         })
                         .insert(Tile)
