@@ -236,6 +236,7 @@ fn spawn_map(
         if visible.0 || !map.is_loaded() {
             continue;
         }
+        // floors
         let floors = map.floors.iter();
         floors.for_each(|floor| {
             let floor_height = floor.height as f32;
@@ -245,11 +246,10 @@ fn spawn_map(
                     if floor.data[j][i] == -1 {
                         continue;
                     }
-                    let offset = 0.5;
-                    let tile_height = floor.data[j][i] as f32 + offset;
-                    let x = (map.width() - 1 - i) as f32 + position.0.x;
-                    let z = (map.depth() - 1 - j) as f32 + position.0.z;
-                    let y = (tile_height - offset) / 2.0 + floor_height + position.0.y;
+                    let tile_height = floor.data[j][i] as f32;
+                    let x = (map.width() - 1 - i) as f32 + position.0.x + 0.5;
+                    let z = (map.depth() - 1 - j) as f32 + position.0.z + 0.5;
+                    let y = tile_height / 2.0 + floor_height + position.0.y;
                     let scale = Vec3::new(1.0, tile_height, 1.0);
                     commands
                         .spawn_bundle(PbrBundle {
