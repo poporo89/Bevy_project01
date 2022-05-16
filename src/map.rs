@@ -27,6 +27,7 @@ impl Level {
 #[derive(Component, Default, Debug, Clone)]
 struct Map {
     floors: Vec<Floor>,
+    stairs: Vec<Stair>,
 }
 
 impl Map {
@@ -43,6 +44,11 @@ impl Map {
     fn is_loaded(&self) -> bool {
         !self.floors.is_empty()
     }
+
+    fn clear(&mut self) {
+        self.floors = Vec::new();
+        self.stairs = Vec::new();
+    }
 }
 
 #[derive(Component, Debug, Default, Clone)]
@@ -58,6 +64,31 @@ impl Floor {
             data: Vec::new(),
         }
     }
+}
+
+#[derive(Component, Debug, Clone)]
+struct Stair {
+    translation: Vec3,
+    direction: Direction,
+    scale: Vec3,
+}
+
+impl Stair {
+    fn new() -> Self {
+        Self {
+            translation: Vec3::ZERO,
+            direction: Direction::PX,
+            scale: Vec3::ZERO,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+enum Direction {
+    PX,
+    MX,
+    PZ,
+    MZ,
 }
 
 #[derive(Component, Debug, Default, Clone)]
@@ -96,7 +127,10 @@ fn setup_levels(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn_bundle(LevelBundle {
             level: Level::TestMap,
-            map: Map { floors: Vec::new() },
+            map: Map {
+                floors: Vec::new(),
+                stairs: Vec::new(),
+            },
             position: Position(Vec3::ZERO),
             visible: Visible(false),
         })
@@ -181,6 +215,52 @@ fn load_map(
                             map.floors.push(temp_floor);
                         }
                     }
+                    "stairs" => {
+                        for raw_stair in map_value.clone_cast::<Vec<Dynamic>>().into_iter() {
+                            let mut temp_stair = Stair::new();
+                            let parsed_stair = raw_stair.try_cast::<rhai::Map>().unwrap();
+                            for (stair_key, stair_value) in parsed_stair.iter() {
+                                match stair_key.as_str() {
+                                    "translation" => {
+                                        let raw_translation =
+                                            stair_value.clone_cast::<rhai::Array>();
+                                        let vec: Vec<f32> = raw_translation
+                                            .into_iter()
+                                            .map(|item| item.try_cast::<f32>().unwrap())
+                                            .collect();
+                                        temp_stair.translation = Vec3::new(vec[0], vec[1], vec[2]);
+                                    }
+                                    "direction" => {
+                                        let direction = stair_value.clone_cast::<String>();
+                                        match direction.as_str() {
+                                            "MX" => {
+                                                temp_stair.direction = Direction::MX;
+                                            }
+                                            "PZ" => {
+                                                temp_stair.direction = Direction::PZ;
+                                            }
+                                            "MZ" => {
+                                                temp_stair.direction = Direction::MZ;
+                                            }
+                                            _ => {
+                                                temp_stair.direction = Direction::PX;
+                                            }
+                                        }
+                                    }
+                                    "scale" => {
+                                        let raw_scale = stair_value.clone_cast::<rhai::Array>();
+                                        let vec: Vec<f32> = raw_scale
+                                            .into_iter()
+                                            .map(|item| item.try_cast::<f32>().unwrap())
+                                            .collect();
+                                        temp_stair.scale = Vec3::new(vec[0], vec[1], vec[2]);
+                                    }
+                                    _ => {}
+                                }
+                            }
+                            map.stairs.push(temp_stair);
+                        }
+                    }
                     _ => {}
                 }
             }
@@ -202,7 +282,7 @@ fn manual_unload_map(
 fn unload_map(level_to_unload: &Level, mut query: Query<(&Level, &mut Map, &mut Position)>) {
     for (level, mut map, mut position) in query.iter_mut() {
         if level == level_to_unload {
-            map.floors = Vec::new();
+            map.clear();
             position.0 = Vec3::ZERO;
             return;
         }
@@ -273,6 +353,110 @@ fn spawn_map(
                         })
                         .insert(Tile)
                         .insert(level.clone());
+                }
+            }
+        });
+        // stairs
+        let stairs = map.stairs.iter();
+        stairs.for_each(|stair| {
+            let translation = stair.translation;
+            let scale = stair.scale;
+            match stair.direction {
+                Direction::PX => {
+                    let num = 3 * scale.x as usize;
+                    for i in 1..=num {
+                        let po = Vec3::new(
+                            (i - 1) as f32 / 3.0 + 1.0 / 6.0,
+                            i as f32 / 6.0 * scale.x / scale.z,
+                            scale.z / 2.0,
+                        );
+                        commands
+                            .spawn_bundle(PbrBundle {
+                                mesh: meshes.add(mesh.clone()),
+                                material: materials.add(material.clone()),
+                                transform: Transform::from_translation(translation + po)
+                                    .with_scale(Vec3::new(
+                                        1.0 / 3.0,
+                                        i as f32 / 3.0 * scale.y / scale.x,
+                                        scale.z,
+                                    )),
+                                ..default()
+                            })
+                            .insert(Tile)
+                            .insert(level.clone());
+                    }
+                }
+                Direction::MX => {
+                    let num = 3 * scale.x as usize;
+                    for i in 1..=num {
+                        let po = Vec3::new(
+                            (i - 1) as f32 / 3.0 + 1.0 / 6.0,
+                            (num - i + 1) as f32 / 6.0 * scale.x / scale.z,
+                            scale.z / 2.0,
+                        );
+                        commands
+                            .spawn_bundle(PbrBundle {
+                                mesh: meshes.add(mesh.clone()),
+                                material: materials.add(material.clone()),
+                                transform: Transform::from_translation(translation + po)
+                                    .with_scale(Vec3::new(
+                                        1.0 / 3.0,
+                                        (num - i + 1) as f32 / 3.0 * scale.y / scale.x,
+                                        scale.z,
+                                    )),
+                                ..default()
+                            })
+                            .insert(Tile)
+                            .insert(level.clone());
+                    }
+                }
+                Direction::PZ => {
+                    let num = 3 * scale.z as usize;
+                    for i in 1..=num {
+                        let po = Vec3::new(
+                            scale.x / 2.0,
+                            i as f32 / 6.0 * scale.y / scale.z,
+                            (i - 1) as f32 / 3.0 + 1.0 / 6.0,
+                        );
+                        commands
+                            .spawn_bundle(PbrBundle {
+                                mesh: meshes.add(mesh.clone()),
+                                material: materials.add(material.clone()),
+                                transform: Transform::from_translation(translation + po)
+                                    .with_scale(Vec3::new(
+                                        scale.x,
+                                        i as f32 / 3.0 * scale.y / scale.z,
+                                        1.0 / 3.0,
+                                    )),
+                                ..default()
+                            })
+                            .insert(Tile)
+                            .insert(level.clone());
+                    }
+                }
+                Direction::MZ => {
+                    let num = 3 * scale.z as usize;
+                    for i in 1..=num {
+                        let po = Vec3::new(
+                            scale.x / 2.0,
+                            (num - i + 1) as f32 / 6.0,
+                            (i - 1) as f32 / 3.0 + 1.0 / 6.0,
+                        );
+                        commands
+                            .spawn_bundle(PbrBundle {
+                                mesh: meshes.add(mesh.clone()),
+                                material: materials.add(material.clone()),
+                                transform: Transform::from_translation(translation + po)
+                                    .with_scale(Vec3::new(
+                                        scale.x,
+                                        i as f32 / 3.0 * scale.y / scale.z,
+                                        1.0 / 3.0,
+                                    )),
+                                ..default()
+                            })
+                            .insert(Tile)
+                            .insert(level.clone());
+                    }
                 }
             }
         });
