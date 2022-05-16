@@ -5,7 +5,7 @@ fn test_map() {
     let position = [1.0, 0.0, 1.0];
 
     // map data
-    let map = [];
+    let floors = [];
 
     // floor: 1
     let height = 0;
@@ -15,7 +15,7 @@ fn test_map() {
         [ 0, 0, 0,],
     ];
     let floor = #{ height: height, data: data };
-    map += floor;
+    floors += floor;
 
     // floor: 2
     let height = 1;
@@ -25,9 +25,9 @@ fn test_map() {
         [ 0, 0, 0,],
     ];
     let floor = #{ height: height, data: data };
-    map += floor;
+    floors += floor;
 
     // return result
-    let result = #{position: position, map: map};
+    let result = #{position: position, floors: floors};
     result
 }
