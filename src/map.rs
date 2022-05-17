@@ -45,6 +45,13 @@ impl Map {
         !self.floors.is_empty()
     }
 
+    fn new() -> Self {
+        Map {
+            floors: Vec::new(),
+            stairs: Vec::new(),
+        }
+    }
+
     fn clear(&mut self) {
         self.floors = Vec::new();
         self.stairs = Vec::new();
@@ -127,10 +134,7 @@ fn setup_levels(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn_bundle(LevelBundle {
             level: Level::TestMap,
-            map: Map {
-                floors: Vec::new(),
-                stairs: Vec::new(),
-            },
+            map: Map::new(),
             position: Position(Vec3::ZERO),
             visible: Visible(false),
         })
