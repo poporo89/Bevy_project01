@@ -84,7 +84,7 @@ impl Stair {
     fn new() -> Self {
         Self {
             translation: Vec3::ZERO,
-            direction: Direction::PX,
+            direction: Direction::PZ,
             scale: Vec3::ZERO,
         }
     }
