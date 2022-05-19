@@ -371,7 +371,7 @@ fn spawn_map(
                     for i in 1..=num {
                         let po = Vec3::new(
                             (i - 1) as f32 / 3.0 + 1.0 / 6.0,
-                            i as f32 / 6.0 * scale.x / scale.z,
+                            i as f32 / 6.0 * scale.y / scale.x,
                             scale.z / 2.0,
                         );
                         commands
@@ -395,7 +395,7 @@ fn spawn_map(
                     for i in 1..=num {
                         let po = Vec3::new(
                             (i - 1) as f32 / 3.0 + 1.0 / 6.0,
-                            (num - i + 1) as f32 / 6.0 * scale.x / scale.z,
+                            (num - i + 1) as f32 / 6.0 * scale.y / scale.x,
                             scale.z / 2.0,
                         );
                         commands
@@ -443,7 +443,7 @@ fn spawn_map(
                     for i in 1..=num {
                         let po = Vec3::new(
                             scale.x / 2.0,
-                            (num - i + 1) as f32 / 6.0,
+                            (num - i + 1) as f32 / 6.0 * scale.y / scale.z,
                             (i - 1) as f32 / 3.0 + 1.0 / 6.0,
                         );
                         commands
@@ -453,7 +453,7 @@ fn spawn_map(
                                 transform: Transform::from_translation(translation + po)
                                     .with_scale(Vec3::new(
                                         scale.x,
-                                        i as f32 / 3.0 * scale.y / scale.z,
+                                        (num - i + 1) as f32 / 3.0 * scale.y / scale.z,
                                         1.0 / 3.0,
                                     )),
                                 ..default()
