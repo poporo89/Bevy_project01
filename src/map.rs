@@ -28,6 +28,7 @@ impl Level {
 struct Map {
     floors: Vec<Floor>,
     stairs: Vec<Stair>,
+    walls: Vec<Wall>,
 }
 
 impl Map {
@@ -49,12 +50,14 @@ impl Map {
         Map {
             floors: Vec::new(),
             stairs: Vec::new(),
+            walls: Vec::new(),
         }
     }
 
     fn clear(&mut self) {
         self.floors = Vec::new();
         self.stairs = Vec::new();
+        self.walls = Vec::new();
     }
 }
 
@@ -86,6 +89,23 @@ impl Stair {
             translation: Vec3::ZERO,
             direction: Direction::PZ,
             scale: Vec3::ZERO,
+        }
+    }
+}
+
+#[derive(Component, Debug, Clone)]
+struct Wall {
+    translation: Vec3,
+    direction: Direction,
+    size: Vec2,
+}
+
+impl Wall {
+    fn new() -> Self {
+        Self {
+            translation: Vec3::ZERO,
+            direction: Direction::PZ,
+            size: Vec2::ZERO,
         }
     }
 }
@@ -263,6 +283,52 @@ fn load_map(
                                 }
                             }
                             map.stairs.push(temp_stair);
+                        }
+                    }
+                    "walls" => {
+                        for raw_wall in map_value.clone_cast::<Vec<Dynamic>>().into_iter() {
+                            let mut temp_wall = Wall::new();
+                            let parsed_wall = raw_wall.try_cast::<rhai::Map>().unwrap();
+                            for (wall_key, wall_value) in parsed_wall.iter() {
+                                match wall_key.as_str() {
+                                    "translation" => {
+                                        let raw_translation =
+                                            wall_value.clone_cast::<rhai::Array>();
+                                        let vec: Vec<f32> = raw_translation
+                                            .into_iter()
+                                            .map(|item| item.try_cast::<f32>().unwrap())
+                                            .collect();
+                                        temp_wall.translation = Vec3::new(vec[0], vec[1], vec[2]);
+                                    }
+                                    "direction" => {
+                                        let raw_direction = wall_value.clone_cast::<String>();
+                                        match raw_direction.as_str() {
+                                            "PX" => {
+                                                temp_wall.direction = Direction::PX;
+                                            }
+                                            "MX" => {
+                                                temp_wall.direction = Direction::MX;
+                                            }
+                                            "MZ" => {
+                                                temp_wall.direction = Direction::MZ;
+                                            }
+                                            _ => {
+                                                temp_wall.direction = Direction::PZ;
+                                            }
+                                        }
+                                    }
+                                    "size" => {
+                                        let raw_size = wall_value.clone_cast::<rhai::Array>();
+                                        let vec: Vec<f32> = raw_size
+                                            .into_iter()
+                                            .map(|item| item.try_cast::<f32>().unwrap())
+                                            .collect();
+                                        temp_wall.size = Vec2::new(vec[0], vec[1]);
+                                    }
+                                    _ => {}
+                                }
+                            }
+                            map.walls.push(temp_wall);
                         }
                     }
                     _ => {}
@@ -461,6 +527,83 @@ fn spawn_map(
                             .insert(Tile)
                             .insert(level.clone());
                     }
+                }
+            }
+        });
+        // walls
+        let walls = map.walls.iter();
+        walls.for_each(|wall| {
+            let translation = wall.translation;
+            let size = wall.size;
+            let material =
+                StandardMaterial::from(Color::rgb(230. / 255., 230. / 255., 230. / 255.));
+            match wall.direction {
+                Direction::PX => {
+                    let material = StandardMaterial::from(Color::rgb(0.0, 0.0, 0.0));
+                    let offset = Vec3::new(-0.01, size.y / 2.0 - 0.5, size.x / 2.0);
+                    let mesh = Mesh::from(shape::Quad { size, flip: false });
+                    commands
+                        .spawn_bundle(PbrBundle {
+                            mesh: meshes.add(mesh),
+                            material: materials.add(material),
+                            transform: Transform::from_rotation(Quat::from_rotation_y(
+                                -std::f32::consts::FRAC_PI_2,
+                            ))
+                            .with_translation(translation + offset),
+                            ..default()
+                        })
+                        .insert(Tile)
+                        .insert(level.clone());
+                }
+                Direction::MX => {
+                    let offset = Vec3::new(0.0, size.y / 2.0 - 0.5, size.x / 2.0);
+                    let mesh = Mesh::from(shape::Quad { size, flip: false });
+                    commands
+                        .spawn_bundle(PbrBundle {
+                            mesh: meshes.add(mesh),
+                            material: materials.add(material),
+                            transform: Transform::from_rotation(Quat::from_rotation_y(
+                                -std::f32::consts::FRAC_PI_2,
+                            ))
+                            .with_translation(translation + offset),
+                            ..default()
+                        })
+                        .insert(Tile)
+                        .insert(level.clone());
+                }
+                Direction::PZ => {
+                    let material = StandardMaterial::from(Color::rgb(0.0, 0.0, 0.0));
+                    let offset = Vec3::new(size.x / 2.0, size.y / 2.0 - 0.5, -0.01);
+                    let mesh = Mesh::from(shape::Quad { size, flip: false });
+                    commands
+                        .spawn_bundle(PbrBundle {
+                            mesh: meshes.add(mesh),
+                            material: materials.add(material),
+                            transform: Transform::from_rotation(Quat::from_rotation_y(
+                                std::f32::consts::PI,
+                            ))
+                            .with_translation(translation + offset),
+                            ..default()
+                        })
+                        .insert(Tile)
+                        .insert(level.clone());
+                }
+                Direction::MZ => {
+                    let offset = Vec3::new(size.x / 2.0, size.y / 2.0 - 0.5, 0.0);
+                    let mesh = Mesh::from(shape::Quad { size, flip: false });
+                    commands
+                        .spawn_bundle(PbrBundle {
+                            mesh: meshes.add(mesh),
+                            material: materials.add(material),
+                            transform: Transform::from_rotation(Quat::from_rotation_y(
+                                std::f32::consts::PI,
+                            ))
+                            .with_translation(translation + offset),
+                            visibility: Visibility { is_visible: false },
+                            ..default()
+                        })
+                        .insert(Tile)
+                        .insert(level.clone());
                 }
             }
         });
