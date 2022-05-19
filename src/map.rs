@@ -235,19 +235,19 @@ fn load_map(
                                         temp_stair.translation = Vec3::new(vec[0], vec[1], vec[2]);
                                     }
                                     "direction" => {
-                                        let direction = stair_value.clone_cast::<String>();
-                                        match direction.as_str() {
+                                        let raw_direction = stair_value.clone_cast::<String>();
+                                        match raw_direction.as_str() {
+                                            "PX" => {
+                                                temp_stair.direction = Direction::PX;
+                                            }
                                             "MX" => {
                                                 temp_stair.direction = Direction::MX;
-                                            }
-                                            "PZ" => {
-                                                temp_stair.direction = Direction::PZ;
                                             }
                                             "MZ" => {
                                                 temp_stair.direction = Direction::MZ;
                                             }
                                             _ => {
-                                                temp_stair.direction = Direction::PX;
+                                                temp_stair.direction = Direction::PZ;
                                             }
                                         }
                                     }
