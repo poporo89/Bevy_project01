@@ -37,7 +37,17 @@ fn test_map() {
     let stair = #{ translation: translation, direction: direction, scale: scale };
     stairs   += stair;
 
+    // wall data
+    let walls = [];
+
+    // wall: 1
+    let translation = [26.0, 0.0, 10.0];
+    let direction   = "MX";
+    let size        = [16.0, 3.0];
+    let wall = #{ translation: translation, direction: direction, size: size };
+    walls   += wall;
+
     // result
-    let result = #{position: position, floors: floors, stairs: stairs};
+    let result = #{position: position, floors: floors, stairs: stairs, walls: walls};
     result
 }
