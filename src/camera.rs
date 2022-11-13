@@ -1,10 +1,9 @@
 use bevy::prelude::*;
-use bevy_inspector_egui::{Inspectable, RegisterInspectable};
 
 #[derive(Component)]
 pub struct MovableCamera;
 
-#[derive(Component, Inspectable)]
+#[derive(Component)]
 struct Speed(f32);
 
 pub struct CameraPlugin;
@@ -13,7 +12,6 @@ impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Msaa { samples: 4 })
             .insert_resource(ClearColor(Color::rgb(10. / 255., 10. / 255., 10. / 255.)))
-            .register_inspectable::<Speed>()
             .add_startup_system(setup_camera)
             .add_system(move_camera);
     }

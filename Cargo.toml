@@ -7,10 +7,10 @@ edition = "2021"
 
 [dependencies.bevy]
 version = "0.7.0"
-features = ["dynamic"]
+#features = ["dynamic"]
 
-[dependencies.bevy-inspector-egui]
-version = "0.10"
+#[dependencies.bevy-inspector-egui]
+#version = "0.10"
 
 [dependencies.bevy_rhai]
 version = "0.3.0"
