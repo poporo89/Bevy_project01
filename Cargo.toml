@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies.bevy]
-version = "0.7.0"
+version = "0.9.0"
 #features = ["dynamic"]
 
 #[dependencies.bevy-inspector-egui]
@@ -16,5 +16,5 @@ version = "0.7.0"
 version = "0.3.0"
 
 [dependencies.rhai]
-version = "1.7.0"
+version = "1.11.0"
 features = ["only_i32", "f32_float"]
