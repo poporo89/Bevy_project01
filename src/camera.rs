@@ -21,8 +21,15 @@ impl Plugin for CameraPlugin {
 fn setup_camera(mut commands: Commands) {
     let position = Vec3::new(7.0, 20.0, 7.0);
     let height = position.y;
-    let mut camera = OrthographicCameraBundle::new_3d();
-    camera.orthographic_projection.scale = 10.0;
+    let mut camera = Camera3dBundle {
+        projection: OrthographicProjection {
+            scale: 10.0,
+            scaling_mode: ScalingMode::FixedVertical(5.0),
+            ..default()
+        }
+        .into(),
+        ..default()
+    };
     camera.transform = Transform::from_xyz(-height, height, -height)
         .looking_at(Vec3::ZERO, Vec3::Y)
         .with_translation(position);
