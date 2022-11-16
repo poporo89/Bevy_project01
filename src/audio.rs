@@ -1,5 +1,6 @@
 use bevy::{audio::AudioSink, prelude::*};
 
+#[derive(Resource)]
 struct MusicController(Handle<AudioSink>);
 
 pub struct AudioPlugin;
