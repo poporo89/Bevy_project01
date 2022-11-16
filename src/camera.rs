@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, time::*};
 
 #[derive(Component)]
 pub struct MovableCamera;
