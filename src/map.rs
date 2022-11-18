@@ -559,7 +559,7 @@ fn spawn_map(
                             ..default()
                         },
                         Tile,
-                        leve.clone(),
+                        level.clone(),
                     ));
                 }
                 Direction::MX => {
