@@ -149,7 +149,6 @@ impl Plugin for MapPlugin {
 // setup levels with empty maps
 fn setup_levels(mut commands: Commands, asset_server: Res<AssetServer>) {
     let handle: Handle<StandardScript> = asset_server.load("scripts/map_editor.rhai");
-    asset_server.watch_for_changes().unwrap();
     // test map
     commands
         .spawn_bundle(LevelBundle {
