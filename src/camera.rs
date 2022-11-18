@@ -35,7 +35,7 @@ fn setup_camera(mut commands: Commands) {
         .with_translation(position);
 
     commands
-        .spawn_bundle(camera)
+        .spawn(camera)
         .insert(Speed(15.0))
         .insert(MovableCamera);
 }

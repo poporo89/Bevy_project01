@@ -24,7 +24,7 @@ impl PluginGroup for IndividualPlugins {
 // set up
 pub fn setup(mut commands: Commands) {
     // light
-    commands.spawn_bundle(DirectionalLightBundle {
+    commands.spawn(DirectionalLightBundle {
         transform: Transform::from_xyz(-3.0, 8.0, -3.0).looking_at(Vec3::ZERO, Vec3::Y),
         directional_light: DirectionalLight {
             illuminance: 6000.0,

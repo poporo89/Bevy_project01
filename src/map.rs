@@ -151,7 +151,7 @@ fn setup_levels(mut commands: Commands, asset_server: Res<AssetServer>) {
     let handle: Handle<StandardScript> = asset_server.load("scripts/map_editor.rhai");
     // test map
     commands
-        .spawn_bundle(LevelBundle {
+        .spawn(LevelBundle {
             level: Level::TestMap,
             map: Map::new(),
             position: Position(Vec3::ZERO),
@@ -402,7 +402,7 @@ fn spawn_map(
                     let scale = Vec3::new(1.0, tile_height, 1.0);
                     if floor.data[j][i] != 0 {
                         commands
-                            .spawn_bundle(PbrBundle {
+                            .spawn(PbrBundle {
                                 mesh: meshes.add(mesh.clone()),
                                 material: materials.add(material.clone()),
                                 transform: Transform::from_translation(Vec3::new(x, y, z))
@@ -413,7 +413,7 @@ fn spawn_map(
                             .insert(level.clone());
                     }
                     commands
-                        .spawn_bundle(PbrBundle {
+                        .spawn(PbrBundle {
                             mesh: meshes.add(mesh.clone()),
                             material: materials.add(material.clone()),
                             transform: Transform::from_translation(Vec3::new(x, -0.25, z))
@@ -440,7 +440,7 @@ fn spawn_map(
                             scale.z / 2.0,
                         );
                         commands
-                            .spawn_bundle(PbrBundle {
+                            .spawn(PbrBundle {
                                 mesh: meshes.add(mesh.clone()),
                                 material: materials.add(material.clone()),
                                 transform: Transform::from_translation(translation + po)
@@ -464,7 +464,7 @@ fn spawn_map(
                             scale.z / 2.0,
                         );
                         commands
-                            .spawn_bundle(PbrBundle {
+                            .spawn(PbrBundle {
                                 mesh: meshes.add(mesh.clone()),
                                 material: materials.add(material.clone()),
                                 transform: Transform::from_translation(translation + po)
@@ -488,7 +488,7 @@ fn spawn_map(
                             (i - 1) as f32 / 3.0 + 1.0 / 6.0,
                         );
                         commands
-                            .spawn_bundle(PbrBundle {
+                            .spawn(PbrBundle {
                                 mesh: meshes.add(mesh.clone()),
                                 material: materials.add(material.clone()),
                                 transform: Transform::from_translation(translation + po)
@@ -512,7 +512,7 @@ fn spawn_map(
                             (i - 1) as f32 / 3.0 + 1.0 / 6.0,
                         );
                         commands
-                            .spawn_bundle(PbrBundle {
+                            .spawn(PbrBundle {
                                 mesh: meshes.add(mesh.clone()),
                                 material: materials.add(material.clone()),
                                 transform: Transform::from_translation(translation + po)
@@ -542,7 +542,7 @@ fn spawn_map(
                     let offset = Vec3::new(-0.01, size.y / 2.0 - 0.5, size.x / 2.0);
                     let mesh = Mesh::from(shape::Quad { size, flip: false });
                     commands
-                        .spawn_bundle(PbrBundle {
+                        .spawn(PbrBundle {
                             mesh: meshes.add(mesh),
                             material: materials.add(material),
                             transform: Transform::from_rotation(Quat::from_rotation_y(
@@ -558,7 +558,7 @@ fn spawn_map(
                     let offset = Vec3::new(0.0, size.y / 2.0 - 0.5, size.x / 2.0);
                     let mesh = Mesh::from(shape::Quad { size, flip: false });
                     commands
-                        .spawn_bundle(PbrBundle {
+                        .spawn(PbrBundle {
                             mesh: meshes.add(mesh),
                             material: materials.add(material),
                             transform: Transform::from_rotation(Quat::from_rotation_y(
@@ -575,7 +575,7 @@ fn spawn_map(
                     let offset = Vec3::new(size.x / 2.0, size.y / 2.0 - 0.5, -0.01);
                     let mesh = Mesh::from(shape::Quad { size, flip: false });
                     commands
-                        .spawn_bundle(PbrBundle {
+                        .spawn(PbrBundle {
                             mesh: meshes.add(mesh),
                             material: materials.add(material),
                             transform: Transform::from_rotation(Quat::from_rotation_y(
@@ -591,7 +591,7 @@ fn spawn_map(
                     let offset = Vec3::new(size.x / 2.0, size.y / 2.0 - 0.5, 0.0);
                     let mesh = Mesh::from(shape::Quad { size, flip: false });
                     commands
-                        .spawn_bundle(PbrBundle {
+                        .spawn(PbrBundle {
                             mesh: meshes.add(mesh),
                             material: materials.add(material),
                             transform: Transform::from_rotation(Quat::from_rotation_y(
