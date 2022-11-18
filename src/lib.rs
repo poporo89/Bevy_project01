@@ -13,8 +13,11 @@ use bevy::{app::*, prelude::*};
 pub struct IndividualPlugins;
 
 impl PluginGroup for IndividualPlugins {
-    fn build(&mut self, group: &mut PluginGroupBuilder) {
-        group.add(AudioPlugin).add(CameraPlugin).add(MapPlugin);
+    fn build(self) -> PluginGroupBuilder {
+        PluginGroupBuilder::start::<Self>()
+            .add(AudioPlugin)
+            .add(CameraPlugin)
+            .add(MapPlugin)
     }
 }
 
