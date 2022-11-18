@@ -34,10 +34,7 @@ fn setup_camera(mut commands: Commands) {
         .looking_at(Vec3::ZERO, Vec3::Y)
         .with_translation(position);
 
-    commands
-        .spawn(camera)
-        .insert(Speed(15.0))
-        .insert(MovableCamera);
+    commands.spawn((camera, Speed(15.0), MovableCamera));
 }
 
 // move camera by hjkl

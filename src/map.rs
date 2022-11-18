@@ -150,14 +150,14 @@ impl Plugin for MapPlugin {
 fn setup_levels(mut commands: Commands, asset_server: Res<AssetServer>) {
     let handle: Handle<StandardScript> = asset_server.load("scripts/map_editor.rhai");
     // test map
-    commands
-        .spawn(LevelBundle {
+    commands.spawn((
+        LevelBundle {
             level: Level::TestMap,
             map: Map::new(),
             position: Position(Vec3::ZERO),
             visible: Visible(false),
-        })
-        .insert_bundle(RhaiBundle {
+        },
+        RhaiBundle {
             engine: StandardEngine::with_engine({
                 let mut engine = Engine::new_raw();
                 engine.set_strict_variables(true);
@@ -166,8 +166,9 @@ fn setup_levels(mut commands: Commands, asset_server: Res<AssetServer>) {
             }),
             script_handle: handle,
             scope: StandardScope::default(),
-        })
-        .insert(Floor::default());
+        },
+        Floor::default(),
+    ));
 }
 
 #[allow(clippy::complexity)]
@@ -401,27 +402,29 @@ fn spawn_map(
                     let y = tile_height / 2.0 + floor_height + position.0.y;
                     let scale = Vec3::new(1.0, tile_height, 1.0);
                     if floor.data[j][i] != 0 {
-                        commands
-                            .spawn(PbrBundle {
+                        commands.spawn((
+                            PbrBundle {
                                 mesh: meshes.add(mesh.clone()),
                                 material: materials.add(material.clone()),
                                 transform: Transform::from_translation(Vec3::new(x, y, z))
                                     .with_scale(scale),
                                 ..default()
-                            })
-                            .insert(Tile)
-                            .insert(level.clone());
+                            },
+                            Tile,
+                            level.clone(),
+                        ));
                     }
-                    commands
-                        .spawn(PbrBundle {
+                    commands.spawn((
+                        PbrBundle {
                             mesh: meshes.add(mesh.clone()),
                             material: materials.add(material.clone()),
                             transform: Transform::from_translation(Vec3::new(x, -0.25, z))
                                 .with_scale(Vec3::new(1.0, 0.5, 1.0)),
                             ..default()
-                        })
-                        .insert(Tile)
-                        .insert(level.clone());
+                        },
+                        Tile,
+                        level.clone(),
+                    ));
                 }
             }
         });
@@ -439,8 +442,8 @@ fn spawn_map(
                             i as f32 / 6.0 * scale.y / scale.x,
                             scale.z / 2.0,
                         );
-                        commands
-                            .spawn(PbrBundle {
+                        commands.spawn((
+                            PbrBundle {
                                 mesh: meshes.add(mesh.clone()),
                                 material: materials.add(material.clone()),
                                 transform: Transform::from_translation(translation + po)
@@ -450,9 +453,10 @@ fn spawn_map(
                                         scale.z,
                                     )),
                                 ..default()
-                            })
-                            .insert(Tile)
-                            .insert(level.clone());
+                            },
+                            Tile,
+                            level.clone(),
+                        ));
                     }
                 }
                 Direction::MX => {
@@ -463,8 +467,8 @@ fn spawn_map(
                             (num - i + 1) as f32 / 6.0 * scale.y / scale.x,
                             scale.z / 2.0,
                         );
-                        commands
-                            .spawn(PbrBundle {
+                        commands.spawn((
+                            PbrBundle {
                                 mesh: meshes.add(mesh.clone()),
                                 material: materials.add(material.clone()),
                                 transform: Transform::from_translation(translation + po)
@@ -474,9 +478,10 @@ fn spawn_map(
                                         scale.z,
                                     )),
                                 ..default()
-                            })
-                            .insert(Tile)
-                            .insert(level.clone());
+                            },
+                            Tile,
+                            level.clone(),
+                        ));
                     }
                 }
                 Direction::PZ => {
@@ -487,8 +492,8 @@ fn spawn_map(
                             i as f32 / 6.0 * scale.y / scale.z,
                             (i - 1) as f32 / 3.0 + 1.0 / 6.0,
                         );
-                        commands
-                            .spawn(PbrBundle {
+                        commands.spawn((
+                            PbrBundle {
                                 mesh: meshes.add(mesh.clone()),
                                 material: materials.add(material.clone()),
                                 transform: Transform::from_translation(translation + po)
@@ -498,9 +503,10 @@ fn spawn_map(
                                         1.0 / 3.0,
                                     )),
                                 ..default()
-                            })
-                            .insert(Tile)
-                            .insert(level.clone());
+                            },
+                            Tile,
+                            level.clone(),
+                        ));
                     }
                 }
                 Direction::MZ => {
@@ -511,8 +517,8 @@ fn spawn_map(
                             (num - i + 1) as f32 / 6.0 * scale.y / scale.z,
                             (i - 1) as f32 / 3.0 + 1.0 / 6.0,
                         );
-                        commands
-                            .spawn(PbrBundle {
+                        commands.spawn((
+                            PbrBundle {
                                 mesh: meshes.add(mesh.clone()),
                                 material: materials.add(material.clone()),
                                 transform: Transform::from_translation(translation + po)
@@ -522,9 +528,10 @@ fn spawn_map(
                                         1.0 / 3.0,
                                     )),
                                 ..default()
-                            })
-                            .insert(Tile)
-                            .insert(level.clone());
+                            },
+                            Tile,
+                            level.clone(),
+                        ));
                     }
                 }
             }
@@ -541,8 +548,8 @@ fn spawn_map(
                     let material = StandardMaterial::from(Color::rgb(0.0, 0.0, 0.0));
                     let offset = Vec3::new(-0.01, size.y / 2.0 - 0.5, size.x / 2.0);
                     let mesh = Mesh::from(shape::Quad { size, flip: false });
-                    commands
-                        .spawn(PbrBundle {
+                    commands.spawn((
+                        PbrBundle {
                             mesh: meshes.add(mesh),
                             material: materials.add(material),
                             transform: Transform::from_rotation(Quat::from_rotation_y(
@@ -550,15 +557,16 @@ fn spawn_map(
                             ))
                             .with_translation(translation + offset),
                             ..default()
-                        })
-                        .insert(Tile)
-                        .insert(level.clone());
+                        },
+                        Tile,
+                        leve.clone(),
+                    ));
                 }
                 Direction::MX => {
                     let offset = Vec3::new(0.0, size.y / 2.0 - 0.5, size.x / 2.0);
                     let mesh = Mesh::from(shape::Quad { size, flip: false });
-                    commands
-                        .spawn(PbrBundle {
+                    commands.spawn((
+                        PbrBundle {
                             mesh: meshes.add(mesh),
                             material: materials.add(material),
                             transform: Transform::from_rotation(Quat::from_rotation_y(
@@ -566,16 +574,17 @@ fn spawn_map(
                             ))
                             .with_translation(translation + offset),
                             ..default()
-                        })
-                        .insert(Tile)
-                        .insert(level.clone());
+                        },
+                        Tile,
+                        level.clone(),
+                    ));
                 }
                 Direction::PZ => {
                     let material = StandardMaterial::from(Color::rgb(0.0, 0.0, 0.0));
                     let offset = Vec3::new(size.x / 2.0, size.y / 2.0 - 0.5, -0.01);
                     let mesh = Mesh::from(shape::Quad { size, flip: false });
-                    commands
-                        .spawn(PbrBundle {
+                    commands.spawn((
+                        PbrBundle {
                             mesh: meshes.add(mesh),
                             material: materials.add(material),
                             transform: Transform::from_rotation(Quat::from_rotation_y(
@@ -583,15 +592,16 @@ fn spawn_map(
                             ))
                             .with_translation(translation + offset),
                             ..default()
-                        })
-                        .insert(Tile)
-                        .insert(level.clone());
+                        },
+                        Tile,
+                        level.clone(),
+                    ));
                 }
                 Direction::MZ => {
                     let offset = Vec3::new(size.x / 2.0, size.y / 2.0 - 0.5, 0.0);
                     let mesh = Mesh::from(shape::Quad { size, flip: false });
-                    commands
-                        .spawn(PbrBundle {
+                    commands.spawn((
+                        PbrBundle {
                             mesh: meshes.add(mesh),
                             material: materials.add(material),
                             transform: Transform::from_rotation(Quat::from_rotation_y(
@@ -600,9 +610,10 @@ fn spawn_map(
                             .with_translation(translation + offset),
                             visibility: Visibility { is_visible: false },
                             ..default()
-                        })
-                        .insert(Tile)
-                        .insert(level.clone());
+                        },
+                        Tile,
+                        level.clone(),
+                    ));
                 }
             }
         });
